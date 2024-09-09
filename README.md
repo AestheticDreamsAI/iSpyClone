@@ -1,9 +1,3 @@
-Es scheint, dass die aktuelle README.md-Datei sehr rudimentär ist, lediglich mit der Überschrift `# CamBase`. Ich könnte dir eine strukturierte und ausführliche README für dein Projekt "iSpyClone" basierend auf den üblichen GitHub-Standards erstellen.
-
-Hier ist ein Vorschlag:
-
----
-
 # iSpyClone
 
 iSpyClone is an open-source project designed for video surveillance and monitoring with features for camera management, motion detection, and video recording.
@@ -49,7 +43,3 @@ We welcome contributions! Please submit a pull request with a detailed descripti
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) file for details.
-
----
-
-Du kannst diese Vorlage entsprechend deiner spezifischen Anforderungen oder Zusatzfunktionen anpassen.
