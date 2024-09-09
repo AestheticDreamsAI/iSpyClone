@@ -884,13 +884,13 @@ function setImageSrcFromBlob(imgElement, blob) {{
             </div>
 
             <div class=""form-group"">
-                <label for=""camera-user"">Username</label>
-                <input type=""text"" id=""camera-user"" name=""camera-user"" value=""" + camera.CameraUser + @""" required oninput=""updatePreview()"">
+                <label for=""username"">Username</label>
+                <input type=""text"" id=""username"" name=""camera-user"" value=""" + camera.CameraUser + @""" required oninput=""updatePreview()"">
             </div>
 
             <div class=""form-group"">
-                <label for=""camera-pass"">Password</label>
-                <input type=""text"" id=""camera-pass"" name=""camera-pass"" value=""" + camera.CameraPass + @""" required oninput=""updatePreview()"">
+                <label for=""password"">Password</label>
+                <input type=""text"" id=""password"" name=""camera-pass"" value=""" + camera.CameraPass + @""" required oninput=""updatePreview()"">
             </div>
 
             <div class=""form-group"">
@@ -938,9 +938,14 @@ function setImageSrcFromBlob(imgElement, blob) {{
     </div>
 
     <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Your code here will run once the DOM is fully loaded
+  console.log('DOM fully loaded and parsed');
+updatePreview();
+});
         function updatePreview() {
             var cameraUrl = document.getElementById('camera-url').value;
-            document.getElementById('camera-preview').src = cameraUrl.replace('[username]',document.querySelector('#camera-user').value).replace('[password]',document.querySelector('#camera-pass').value);
+            document.getElementById('camera-preview').src = cameraUrl.replace('[username]',document.querySelector('#username').value).replace('[password]',document.querySelector('#password').value);
         }
         function confirmDelete() {
             if (confirm(""Are you sure you want to delete this camera? This action cannot be undone."")) {
@@ -949,7 +954,6 @@ function setImageSrcFromBlob(imgElement, blob) {{
                 document.querySelector('.edit-form').submit();
             }
         }
-updatePreview();
     </script>
 </body>
 </html>";
@@ -1183,23 +1187,25 @@ updatePreview();
 
             <div class=""preview"">
                 <h3>Camera Preview</h3>
-                <img src='' alt=""Camera Preview"">
+                <img src='' id='camera-preview' alt=""Camera Preview"">
             </div>
 
             <div class=""form-actions"">
-                <button type=""submit"" class=""btn btn-primary"">Save Changes</button>
-                <button type=""button"" class=""btn btn-danger"" onclick=""confirmDelete()"">Delete Camera</button>
+                <button type=""submit"" class=""btn btn-primary"">Save</button>
             </div>
         </form>
     </div>
 
     <script>
-        
         function updatePreview() {
             var cameraUrl = document.getElementById('camera-url').value;
-            document.getElementById('camera-preview').src = cameraUrl.replace('[username]',document.querySelector('#camera-user').value).replace('[password]',document.querySelector('#camera-pass').value);
+            document.getElementById('camera-preview').src = cameraUrl.replace('[username]',document.querySelector('#username').value).replace('[password]',document.querySelector('#password').value);
         }
+        document.addEventListener('DOMContentLoaded', function() {
+  // Your code here will run once the DOM is fully loaded
+  console.log('DOM fully loaded and parsed');
 updatePreview();
+});
     </script>
 </body>
 </html>";

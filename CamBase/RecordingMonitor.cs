@@ -6,7 +6,7 @@
     // Zeitspanne in Sekunden, nach der geprüft wird, ob keine Aufnahme stattgefunden hat
     public static int CheckIntervalInSeconds = 60;
     public static int MaxIdleTimeInSeconds = 300; // 5 Minuten Leerlaufzeit
-    public static int MaxInactiveCameras = 5; // Anzahl der inaktiven Kameras, die das Programm beenden soll
+    public static int MaxInactiveCameras = 2; // Anzahl der inaktiven Kameras, die das Programm beenden soll
 
     // Methode zum Aktualisieren der letzten Aufnahmezeit
     public static void UpdateLastRecordingTime(Camera cam)
@@ -24,6 +24,7 @@
     // Methode, um zu überprüfen, ob eine Kamera zu lange inaktiv war
     public static bool CheckIdleCameras()
     {
+        Console.ForegroundColor = ConsoleColor.Red;
         int inactiveCamerasCount = 0;
 
         foreach (var cam in Cameras.All())
@@ -36,7 +37,7 @@
                 if (timeSinceLastRecording.TotalSeconds > MaxIdleTimeInSeconds)
                 {
                     inactiveCamerasCount++;
-                    Console.WriteLine($"{cam.CameraName} - Keine Aufnahme seit {timeSinceLastRecording.TotalMinutes} Minuten.");
+                    Console.WriteLine($"- {DateTime.Now.ToLongTimeString()}: {cam.CameraName} - Keine Aufnahme seit {Math.Round(timeSinceLastRecording.TotalMinutes)} Minuten.");
                 }
             }
             else
@@ -51,7 +52,7 @@
                 return true; // Gibt an, dass das Programm beendet werden soll
             }
         }
-
+        Console.ForegroundColor = ConsoleColor.White;
         return false; // Keine Beendigung erforderlich
     }
 

@@ -77,7 +77,7 @@ class Program
     {
         Console.Title = title;
         Console.ForegroundColor = ConsoleColor.DarkBlue;
-        Console.WriteLine(CamBase.Properties.Resources.header2.Replace("[version]", ver.ToUpper()));
+        Console.WriteLine(iSpyClone.Properties.Resources.header2.Replace("[version]", ver.ToUpper()));
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine("-----------------------------------------------------------------------------------------------------------------------");
     }

@@ -6,11 +6,12 @@ using System.Text;
 using System.Threading.Tasks;
 public class Cameras
 {
-    private static Dictionary<int, Camera> list = null;
+    private static Dictionary<int, Camera> list = new Dictionary<int, Camera>();
     private static string filePath = "cam.json";
     public static void Load()
     {
         // JSON-Datei einlesen und in Dictionary<int, Camera> umwandeln
+        list.Clear();
         if (File.Exists(filePath))
         {
             list = JsonConvert.DeserializeObject<Dictionary<int, Camera>>(File.ReadAllText(filePath));
@@ -30,6 +31,7 @@ public class Cameras
         }
 
         File.WriteAllText(filePath, JsonConvert.SerializeObject(l));
+        Load();
     }
 
     public static void Add(int index, Camera camera)

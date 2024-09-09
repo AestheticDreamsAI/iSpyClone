@@ -23,6 +23,7 @@ public class HttpServer
     {
         _isRunning = true;
         _listener.Start();
+        Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine("Server started...");
         Console.WriteLine("-----------------------------------------------------------------------------------------------------------------------");
         while (!cts.IsCancellationRequested)
@@ -60,12 +61,13 @@ public class HttpServer
                     var parsedFormData = ParseFormData(requestBody);
                     if (path.Contains("/add"))
                     {
+                        // Generiere einen verfügbaren CameraIndex
                         var cam = new Camera
                         {
-                            CameraIndex = Cameras.All().Count
+                            CameraIndex = await GetAvailableCameraIndex() // Verwende die Funktion hier
                         };
 
-                        // Set camera properties from form data
+                        // Setze die Kameraeigenschaften aus den Formulardaten
                         if (parsedFormData.ContainsKey("camera-name"))
                         {
                             cam.CameraName = (string)parsedFormData["camera-name"];
@@ -86,14 +88,15 @@ public class HttpServer
                             cam.CameraUrl = (string)parsedFormData["camera-url"];
                         }
 
-                        // Add new camera
+                        // Füge die neue Kamera hinzu
                         Cameras.Add(cam.CameraIndex, cam);
 
-                        // Redirect after adding
+                        // Weiterleitung nach dem Hinzufügen
                         context.Response.Redirect("/");
                         context.Response.OutputStream.Close();
                         return;
                     }
+
                     else if (path.Contains("/edit"))
                     {
                         if (parsedFormData.ContainsKey("camera-index"))
@@ -114,14 +117,14 @@ public class HttpServer
                                         cam.CameraName = (string)parsedFormData["camera-name"];
                                     }
 
-                                    if (parsedFormData.ContainsKey("username"))
+                                    if (parsedFormData.ContainsKey("camera-user"))
                                     {
-                                        cam.CameraUser = (string)parsedFormData["username"];
+                                        cam.CameraUser = (string)parsedFormData["camera-user"];
                                     }
 
-                                    if (parsedFormData.ContainsKey("password"))
+                                    if (parsedFormData.ContainsKey("camera-pass"))
                                     {
-                                        cam.CameraPass = (string)parsedFormData["password"];
+                                        cam.CameraPass = (string)parsedFormData["camera-pass"];
                                     }
 
                                     if (parsedFormData.ContainsKey("camera-url"))
@@ -214,10 +217,21 @@ public class HttpServer
         }
         catch (Exception ex)
         {
-            //Console.WriteLine(ex.Message);
+            Console.WriteLine(ex.Message);
         }
     }
 
+    private async Task<int> GetAvailableCameraIndex()
+    {
+        int newIndex = 0;
+        // Schleife, um einen nicht existierenden Index zu finden
+        while (Cameras.All().Any(c => c.CameraIndex == newIndex))
+        {
+            newIndex++;
+        }
+
+        return newIndex;
+    }
 
 
 
