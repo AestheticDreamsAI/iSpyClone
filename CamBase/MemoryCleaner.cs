@@ -11,12 +11,13 @@ namespace CamBase
     {
         public static async Task StartAsync(CancellationToken cts)
         {
-            Console.WriteLine("Memory Cleaner started...");
+            Console.WriteLine("- Memory Cleaner started...");
             while (!cts.IsCancellationRequested)
             {
                 FlushMemory();
                 await Task.Delay(10000);
             }
+            Console.WriteLine("- Memory Cleaner stopped...");
         }
         public static void FlushMemory()
         {

@@ -59,7 +59,7 @@
     // Diese Methode wird als Hintergrundtask ausgeführt, um regelmäßig zu überprüfen
     public static async Task StartMonitoring(CancellationTokenSource cts) // Änderung hier: Verwende CancellationTokenSource statt CancellationToken
     {
-        Console.WriteLine("Recording Monitor started...");
+        Console.WriteLine("- Recording Monitor started...");
         while (!cts.Token.IsCancellationRequested)
         {
             if (CheckIdleCameras())
@@ -71,5 +71,6 @@
 
             await Task.Delay(CheckIntervalInSeconds * 1000); // Überprüfe alle X Sekunden
         }
+        Console.WriteLine("- Recording Monitor stopped...");
     }
 }

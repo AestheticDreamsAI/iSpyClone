@@ -15,6 +15,7 @@ class Program
     static async Task Main(string[] args)
     {
         Header("iSpyClone", "preview 1");
+
         string directoryPath = @".\media\";
         Cameras.Load();
 
@@ -25,47 +26,45 @@ class Program
         var server = new HttpServer(prefixes);
         using (CancellationTokenSource cts = new CancellationTokenSource())
         {
+            // Fange das Ctrl-C oder Schließen der Konsole ab
+            Console.CancelKeyPress += (sender, e) =>
+            {
+                e.Cancel = true;  // Verhindere das sofortige Schließen der Konsole
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine("- Stop signal received. Stopping all Services...");
+                cts.Cancel();      // Stoppe alle Tasks sauber
+            };
+
             Task serverTask = Task.Run(() => server.StartAsync(cts.Token));
-
             Task memoryCleanerTask = Task.Run(async () => await MemoryCleaner.StartAsync(cts.Token));
-            // Start motion detection on a separate thread
             Task detectionTask = Task.Run(async () => await Motion.StartDetection(cts.Token, 1));
-
-            // Monitoring task in a separate thread
             Task FileManagerTask = Task.Run(async () => await manager.StartMonitoring(cts.Token));
-
-            // Start RecordingMonitor to track camera inactivity
             Task monitoringTask = Task.Run(async () => await RecordingMonitor.StartMonitoring(cts));
 
-            // Warte darauf, ob der CancellationToken ausgelöst wird oder der Benutzer das Programm manuell beendet
-            await Task.WhenAny(monitoringTask, Task.Run(() => Console.ReadKey()));
+            CameraStatistics.LoadStatistics();
 
-            // Wenn der Task wegen Inaktivität beendet wurde, beende das Programm
+            // Warte darauf, ob der Benutzer das Programm manuell beendet
+            await Task.WhenAny(monitoringTask);
+
             if (cts.IsCancellationRequested)
             {
-                //Console.WriteLine("Zu viele Kameras inaktiv. Programm wird beendet.");
-            }
-            else
-            {
-                //Console.WriteLine("Manuelle Beendigung durch Benutzer.");
-                cts.Cancel();  // Stoppe die Überwachung (cancel Task)
+
             }
 
-            // Server stoppen
+            CameraStatistics.SaveStatistics();
             server.Stop();
-
-            // Warte auf den Abschluss aller Tasks
+            await Task.Delay(2000);
             try
             {
                 await Task.WhenAll(serverTask, monitoringTask, detectionTask, memoryCleanerTask, FileManagerTask);
-            Console.Clear();
-            Header("iSpyClone", "preview 1");
-            Console.WriteLine("Beenden...");
-            await Task.Delay(5000);
+                Console.Clear();
+                Header("iSpyClone", "preview 1");
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine("Exiting...");
+                await Task.Delay(2000);
             }
             catch (OperationCanceledException)
             {
-                // Dies wird erwartet, wenn Tasks aufgrund von CancellationToken abgebrochen werden
                 Console.WriteLine("Tasks wurden abgebrochen.");
             }
         }

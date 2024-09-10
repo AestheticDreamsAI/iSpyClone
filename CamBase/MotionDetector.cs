@@ -36,7 +36,7 @@ public class Motion
     public static async Task StartDetection(CancellationToken cts, int inter)
     {
         Interval = inter;
-        Console.WriteLine("Motion Detection started...");
+        Console.WriteLine("- Motion Detection started...");
 
         while (!cts.IsCancellationRequested)
         {
@@ -54,6 +54,7 @@ public class Motion
             // Kurze Pause, bevor erneut geprüft wird
             await Task.Delay(Interval * 1000); // Verwende den festgelegten Intervall
         }
+        Console.WriteLine("- Motion Detection stopped...");
     }
 
     private static async Task StartRecordingSafely(Camera cam)
@@ -71,6 +72,7 @@ public class Motion
         if (cam.IsRecording) return; // Verhindere gleichzeitige Aufnahmen für dieselbe Kamera
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"- {DateTime.Now.ToLongTimeString()}: {cam.CameraName} - Motion Detected");
+        CameraStatistics.MotionDetected(cam);
         cam.IsRecording = true;
 
         try
@@ -80,6 +82,7 @@ public class Motion
             var timeoutTask = Task.Delay(TimeSpan.FromSeconds(timeout)); // Maximal 60 Sekunden Aufnahme
 
             // Warte, bis die Aufnahme abgeschlossen oder der Timeout erreicht ist
+            CameraStatistics.RecordStart(cam);
             var completedTask = await Task.WhenAny(recordingTask, timeoutTask);
 
             if (completedTask == timeoutTask)
@@ -100,6 +103,7 @@ public class Motion
             Console.WriteLine($"- {DateTime.Now.ToLongTimeString()}: {cam.CameraName} - recording succeded");
             Console.ForegroundColor= ConsoleColor.White;
             RecordingMonitor.UpdateLastRecordingTime(cam);
+            CameraStatistics.RecordEnd(cam);
         }
     }
 }

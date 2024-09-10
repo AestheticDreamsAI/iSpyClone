@@ -24,7 +24,7 @@ public class HttpServer
         _isRunning = true;
         _listener.Start();
         Console.ForegroundColor = ConsoleColor.White;
-        Console.WriteLine("Server started...");
+        Console.WriteLine("- Webserver started...");
         Console.WriteLine("-----------------------------------------------------------------------------------------------------------------------");
         while (!cts.IsCancellationRequested)
         {
@@ -35,6 +35,7 @@ public class HttpServer
             }
             catch { }
         }
+        Console.WriteLine("- Webserver stopped...");
     }
 
     public void Stop()
@@ -264,6 +265,10 @@ public class HttpServer
                 context.Response.ContentType = "text/html";
                 return await Dashboard.EditPage(index);
             }
+        }else if (path.Contains("/stats"))
+        {
+                context.Response.ContentType = "text/html";
+                return await Dashboard.CameraStatisticsPage();
         }
         return "<html><body><h1>404 Not Found</h1></body></html>";
         

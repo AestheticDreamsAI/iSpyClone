@@ -12,7 +12,7 @@
 
     public async Task StartMonitoring(CancellationToken cancellationToken)
     {
-                Console.WriteLine("File Manager started...");
+                Console.WriteLine("- File Manager started...");
         while (!cancellationToken.IsCancellationRequested)
         {
             try
@@ -24,6 +24,7 @@
             }
             catch { }
         }
+        Console.WriteLine("- File Manager stopped...");
     }
 
     private void CheckAndClearIfExceedsLimit()

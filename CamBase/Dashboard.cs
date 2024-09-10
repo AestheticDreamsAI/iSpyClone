@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using static CameraStatistics;
 
 
 internal class Dashboard
@@ -40,7 +41,7 @@ internal class Dashboard
     <meta charset=""UTF-8"">
     <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
     <title>Security Camera WebUI</title>
-<link rel=""manifest"" href=""manifest.json?t="+Guid.NewGuid().ToString()+@""">
+<link rel=""manifest"" href=""manifest.json?t="+Guid.NewGuid().ToString()+ @""">
           <script src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js'></script>
 <style>
   html, body {
@@ -227,10 +228,12 @@ internal class Dashboard
     </style>
 </head>
 <body>
-<div class=""navbar"">
-    <a href=""../"">Home</a>
-    <a href=""../add"" class='addCam'>Add Camera</a>
-</div>
+    <div class=""navbar"">
+        <a href=""../"">Home</a>
+        <a href=""../stats"">Statistics</a>
+        <a href=""../add"" class='addCam'>Add Camera</a>
+    </div>
+
         <h1>" + Console.Title+@"</h1>
     <div class=""container"">
         <div class=""camera-grid"">
@@ -504,10 +507,12 @@ text-align:center;
     </style>
 </head>
 <body>
-<div class=""navbar"">
-    <a href=""../"">Home</a>
-    <a href=""../add"" class='addCam'>Add Camera</a>
-</div>
+    <div class=""navbar"">
+        <a href=""../"">Home</a>
+        <a href=""../stats"">Statistics</a>
+        <a href=""../add"" class='addCam'>Add Camera</a>
+    </div>
+
     <div class='container'>
         <h1>{camera.CameraName}</h1>
 
@@ -871,6 +876,7 @@ function setImageSrcFromBlob(imgElement, blob) {{
 <body>
     <div class=""navbar"">
         <a href=""../"">Home</a>
+        <a href=""../stats"">Statistics</a>
         <a href=""../add"" class='addCam'>Add Camera</a>
     </div>
 
@@ -1132,10 +1138,11 @@ updatePreview();
     </style>
 </head>
 <body>
-<div class=""navbar"">
-    <a href=""../"">Home</a>
-    <a href=""../add"">Add Camera</a>
-</div>
+    <div class=""navbar"">
+        <a href=""../"">Home</a>
+        <a href=""../stats"">Statistics</a>
+        <a href=""../add"" class='addCam'>Add Camera</a>
+    </div>
 
     <div class=""container"">
         <h1>Add Camera</h1>
@@ -1211,6 +1218,138 @@ updatePreview();
 </html>";
     }
 
+    public static async Task<string> CameraStatisticsPage()
+    {
+        // Load saved statistics (if available)
+        CameraStatistics.LoadStatistics();
+
+        var _camStats_ = "";
+        foreach (Camera cam in Cameras.All())
+        {
+            // Fetch stats for the current camera
+            var stats = CameraStatistics.GetStatistics(cam);
+
+            // Fallback if no stats are available
+            var totalRecordings = stats != null ? stats.TotalRecordings.ToString() : "0";
+            var totalMotionDetections = stats != null ? stats.TotalMotionDetections.ToString() : "0";
+            var totalRecordingDuration = stats != null ? stats.TotalRecordingDuration.TotalMinutes.ToString("F2") + " mins" : "0 mins";
+
+            // Build the HTML for each camera's statistics
+            _camStats_ += $@"
+            <div class=""camera-stats-card"">
+                <h3>{cam.CameraName}</h3>
+                <p><strong>Total Recordings:</strong> {totalRecordings}</p>
+                <p><strong>Total Motion Detections:</strong> {totalMotionDetections}</p>
+                <p><strong>Total Recording Duration:</strong> {totalRecordingDuration}</p>
+            </div>";
+        }
+
+        // Return the complete HTML page with consistent design
+        return $@"
+<!DOCTYPE html>
+<html lang=""en"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Camera Statistics</title>
+    <link rel=""icon"" type=""image/png"" href=""logo.png"">
+    <meta name='theme-color' content='#333333'>
+    <link rel=""manifest"" href=""manifest.json?t={Guid.NewGuid()}"">
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js'></script>
+    <style>
+        :root {{
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --danger-color: #e74c3c;
+        }}
+        body, html {{
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }}
+        .container {{
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }}
+        h1 {{
+            text-align: center;
+        }}
+        .camera-stats-card {{
+            background-color: #2c2c2c;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }}
+        .camera-stats-card h3 {{
+            margin-top: 0;
+            color: var(--primary-color);
+        }}
+        .navbar {{
+            display: flex;
+            justify-content: flex-end;
+            background-color: #333;
+            padding: 10px;
+        }}
+        .navbar a {{
+            color: white;
+            padding: 14px 20px;
+            text-decoration: none;
+            text-align: center;
+        }}
+        .navbar a:hover {{
+            background-color: #ddd;
+            color: black;
+        }}
+        .navbar .addCam {{
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 20px;
+        }}
+
+/* For WebKit browsers (Chrome, Safari) */
+::-webkit-scrollbar {{
+    width: 8px; /* Width of the scrollbar */
+}}
+
+::-webkit-scrollbar-thumb {{
+    background-color: #444; /* Dark scrollbar color */
+    border-radius: 10px; /* Rounded corners */
+}}
+
+::-webkit-scrollbar-thumb:hover {{
+    background-color: #555; /* Lighter shade on hover */
+}}
+
+::-webkit-scrollbar-track {{
+    background-color: #222; /* Dark background for the scrollbar track */
+}}
+
+/* For Firefox */
+* {{
+    scrollbar-width: thin; /* Thin scrollbar */
+    scrollbar-color: #444 #222; /* Thumb color and track color */
+}}
+
+    </style>
+</head>
+<body>
+    <div class=""navbar"">
+        <a href=""../"">Home</a>
+        <a href=""../stats"">Statistics</a>
+        <a href=""../add"" class='addCam'>Add Camera</a>
+    </div>
+    <div class=""container"">
+        <h1>Camera Statistics</h1>
+        {_camStats_}
+    </div>
+</body>
+</html>";
+    }
 
 
 }
