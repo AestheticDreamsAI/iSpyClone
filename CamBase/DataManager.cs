@@ -1,13 +1,23 @@
 ﻿public class DataManager
 {
-    private string _directoryPath;
-    private const long MaxSizeInBytes = 2L * 1024 * 1024 * 1024; // 2 GB in Bytes
+    public string _directoryPath;
+    public long MaxSizeInBytes = 1L * 50 * 1024 * 1024 * 1024; // 2 GB in Bytes
     private int _checkIntervalInMinutes;
 
+    public string getDirectory()
+    {
+        return _directoryPath;
+    }
     public DataManager(string directoryPath, int checkIntervalInMinutes = 5)
     {
         _directoryPath = directoryPath;
         _checkIntervalInMinutes = checkIntervalInMinutes;
+        Directory.CreateDirectory(directoryPath);
+    }
+
+    public long getMaxSize()
+    {
+        return MaxSizeInBytes; 
     }
 
     public async Task StartMonitoring(CancellationToken cancellationToken)

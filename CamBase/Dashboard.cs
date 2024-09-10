@@ -319,7 +319,7 @@ function viewCamera(id) {
         try
         {
             camera = Cameras.Get(index);
-            foreach (var f in Directory.GetDirectories($@".\media\video\{camera.CameraIndex}\", "*.*"))
+            foreach (var f in Directory.GetDirectories(Program.manager.getDirectory()+$@"\video\{camera.CameraIndex}\", "*.*"))
             {
                 var p = Path.GetFileName(f).Replace("_"," ").Replace("-",".").Split(' ');
                 _recordings_ += $@"
@@ -1220,10 +1220,22 @@ updatePreview();
 
     public static async Task<string> CameraStatisticsPage()
     {
-        // Load saved statistics (if available)
-        CameraStatistics.LoadStatistics();
+        // Get the maximum size allocated for storage (in bytes) from Program.manager
+        long totalStorageInBytes = Program.manager.getMaxSize();
+        long totalStorageInMB = totalStorageInBytes / (1024 * 1024); // Convert bytes to MB
 
+        // Calculate used storage by summing the size of all files in the media directory
+        string mediaDirectory = Program.manager.getDirectory();
+        long usedStorageInBytes = Directory.GetFiles(mediaDirectory, "*", SearchOption.AllDirectories)
+            .Sum(file => new FileInfo(file).Length);
+        long usedStorageInMB = usedStorageInBytes / (1024 * 1024); // Convert bytes to MB
+
+        // Calculate the percentage of storage used
+        double storageUsedPercentage = (double)usedStorageInBytes / totalStorageInBytes * 100;
+
+        // Generate camera statistics
         var _camStats_ = "";
+        int i = 0;
         foreach (Camera cam in Cameras.All())
         {
             // Fetch stats for the current camera
@@ -1235,13 +1247,16 @@ updatePreview();
             var totalRecordingDuration = stats != null ? stats.TotalRecordingDuration.TotalMinutes.ToString("F2") + " mins" : "0 mins";
 
             // Build the HTML for each camera's statistics
+            var m = "style='margin-top:60px;'";
+            if (i != 0) m = "";
             _camStats_ += $@"
-            <div class=""camera-stats-card"">
-                <h3>{cam.CameraName}</h3>
-                <p><strong>Total Recordings:</strong> {totalRecordings}</p>
-                <p><strong>Total Motion Detections:</strong> {totalMotionDetections}</p>
-                <p><strong>Total Recording Duration:</strong> {totalRecordingDuration}</p>
-            </div>";
+        <div class=""camera-stats-card"" "+m+$@">
+            <h3>{cam.CameraName}</h3>
+            <p><strong>Total Recordings:</strong> {totalRecordings}</p>
+            <p><strong>Total Motion Detections:</strong> {totalMotionDetections}</p>
+            <p><strong>Total Recording Duration:</strong> {totalRecordingDuration}</p>
+        </div>";
+            i++;
         }
 
         // Return the complete HTML page with consistent design
@@ -1310,31 +1325,53 @@ updatePreview();
             color: white;
             border-radius: 20px;
         }}
+        .progress-bar-container {{
+            width: 100%;
+            background-color: #444;
+            border-radius: 25px;
+            margin-bottom: 20px;
+            position: relative; /* Add this to ensure child elements position properly */
 
-/* For WebKit browsers (Chrome, Safari) */
-::-webkit-scrollbar {{
-    width: 8px; /* Width of the scrollbar */
-}}
-
-::-webkit-scrollbar-thumb {{
-    background-color: #444; /* Dark scrollbar color */
-    border-radius: 10px; /* Rounded corners */
-}}
-
-::-webkit-scrollbar-thumb:hover {{
-    background-color: #555; /* Lighter shade on hover */
-}}
-
-::-webkit-scrollbar-track {{
-    background-color: #222; /* Dark background for the scrollbar track */
-}}
-
-/* For Firefox */
-* {{
-    scrollbar-width: thin; /* Thin scrollbar */
-    scrollbar-color: #444 #222; /* Thumb color and track color */
-}}
-
+        }}
+        .progress-bar {{
+            width: {storageUsedPercentage:F2}%;
+            height: 25px;
+            background-color: {GetProgressBarColor(storageUsedPercentage)};
+            border-radius: 25px;
+            text-align: center;
+            line-height: 25px; /* Vertically center text */
+            color: white;
+            position: absolute; /* Position the progress bar inside the container */
+        }}
+        .progress-text {{
+            position: absolute;
+            width: 100%;
+            height: 25px;
+            top: 0;
+            left: 0;
+            text-align: center;
+            color: white;
+            line-height: 25px;
+        }}
+        /* For WebKit browsers (Chrome, Safari) */
+        ::-webkit-scrollbar {{
+            width: 8px; /* Width of the scrollbar */
+        }}
+        ::-webkit-scrollbar-thumb {{
+            background-color: #444; /* Dark scrollbar color */
+            border-radius: 10px; /* Rounded corners */
+        }}
+        ::-webkit-scrollbar-thumb:hover {{
+            background-color: #555; /* Lighter shade on hover */
+        }}
+        ::-webkit-scrollbar-track {{
+            background-color: #222; /* Dark background for the scrollbar track */
+        }}
+        /* For Firefox */
+        * {{
+            scrollbar-width: thin; /* Thin scrollbar */
+            scrollbar-color: #444 #222; /* Thumb color and track color */
+        }}
     </style>
 </head>
 <body>
@@ -1345,11 +1382,31 @@ updatePreview();
     </div>
     <div class=""container"">
         <h1>Camera Statistics</h1>
+        
+        <!-- Progress Bar for Storage -->
+        <div class=""progress-bar-container"">
+            <div class=""progress-bar""></div>
+            <div class=""progress-text"">{storageUsedPercentage:F2}% used ({usedStorageInMB} MB of {totalStorageInMB} MB)</div>
+        </div>
+
         {_camStats_}
     </div>
 </body>
 </html>";
     }
+
+    // Function to determine progress bar color based on percentage
+    private static string GetProgressBarColor(double percentage)
+    {
+        if (percentage < 50)
+            return "#2ecc71"; // green
+        else if (percentage < 75)
+            return "#f1c40f"; // yellow
+        else
+            return "#e74c3c"; // red
+    }
+
+
 
 
 }

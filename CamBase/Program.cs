@@ -10,16 +10,55 @@ using Colorful;
 using Newtonsoft.Json;
 using Console = System.Console;
 
+using System;
+using System.IO;
+using Newtonsoft.Json;
+
+public class Config
+{
+    public string SavingDir { get; set; } = ".\\media";
+
+    // Method to load configuration from a file
+    public static Config Load(string filePath = ".\\config.json")
+    {
+        if (File.Exists(filePath))
+        {
+            var json = File.ReadAllText(filePath);
+            return JsonConvert.DeserializeObject<Config>(json);
+        }
+        else
+        {
+            return new Config();
+        }
+    }
+
+    // Method to save the current configuration to a file
+    public void Save(string filePath = ".\\config.json")
+    {
+        var json = JsonConvert.SerializeObject(this, Formatting.Indented);
+        File.WriteAllText(filePath, json);
+    }
+}
+
 class Program
 {
+    private static string Name = "iSpyClone";
+    private static string Version = "Preview 2";
+
+    public static DataManager manager;
     static async Task Main(string[] args)
     {
-        Header("iSpyClone", "preview 1");
-
-        string directoryPath = @".\media\";
+        
+        Config config = new Config();
+        if (!File.Exists(".\\config.json"))
+            config.Save();
+        else config = Config.Load();
+        Header(Name, Version);
+        //config.SavingDir = "h:\\media";
+        string directoryPath = config.SavingDir;
         Cameras.Load();
 
-        DataManager manager = new DataManager(directoryPath, 5); // Überprüfung alle 5 Minuten
+        manager = new DataManager(directoryPath, 5); // Überprüfung alle 5 Minuten
         string[] prefixes = { "http://*:8040/" };
 
         // Start HTTP server on a separate thread
@@ -58,7 +97,7 @@ class Program
             {
                 await Task.WhenAll(serverTask, monitoringTask, detectionTask, memoryCleanerTask, FileManagerTask);
                 Console.Clear();
-                Header("iSpyClone", "preview 1");
+                Header(Name, Version);
                 Console.ForegroundColor = ConsoleColor.Magenta;
                 Console.WriteLine("Exiting...");
                 await Task.Delay(2000);

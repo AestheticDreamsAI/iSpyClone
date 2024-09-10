@@ -35,7 +35,7 @@ using System.Threading.Tasks;
         var camera = new Camera();
         try
         {
-            var f = Directory.GetFiles(path, "*.*");
+            var f = Directory.GetFiles(path.Replace(".\\media",Program.manager.getDirectory()), "*.*");
             var t = f.FirstOrDefault();
             return camera.ImageToByteArray(Image.FromFile(t));
         }
@@ -64,7 +64,7 @@ using System.Threading.Tasks;
     }
     private static async Task CreateGif(string cameraIndex, string timestamp, List<string> imageFiles)
     {
-        string gifFolderPath = Path.Combine("media", "video", cameraIndex, timestamp);
+        string gifFolderPath = Path.Combine(Program.manager._directoryPath, "video", cameraIndex, timestamp);
         Directory.CreateDirectory(gifFolderPath); // Sicherstellen, dass das Verzeichnis existiert
 
         string gifFilePath = Path.Combine(gifFolderPath, "animated.gif");
@@ -106,7 +106,7 @@ using System.Threading.Tasks;
         string timestamp = d.ToString("dd-MM-yyyy_HH-mm-ss");
 
         // Create the path as media/images/{cam.CameraIndex}/{timestamp}
-        string folderPath = Path.Combine("media", "images", cam.CameraIndex.ToString(), timestamp);
+        string folderPath = Path.Combine(Program.manager.getDirectory(), "images", cam.CameraIndex.ToString(), timestamp);
         Directory.CreateDirectory(folderPath); // Ensure the directory exists
 
         List<string> imageFiles = new List<string>(); // To store captured image paths

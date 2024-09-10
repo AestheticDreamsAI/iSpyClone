@@ -37,6 +37,7 @@ public class CameraStatistics
 
             //Console.WriteLine($"{camera.CameraName} - Recording ended. Total recording duration: {stat.TotalRecordingDuration.TotalMinutes} minutes.");
         }
+        SaveStatistics();
     }
 
     // Method to update motion detections
