@@ -1220,22 +1220,26 @@ updatePreview();
 
     public static async Task<string> CameraStatisticsPage()
     {
+        // Load saved statistics (if available)
+
         // Get the maximum size allocated for storage (in bytes) from Program.manager
         long totalStorageInBytes = Program.manager.getMaxSize();
-        long totalStorageInMB = totalStorageInBytes / (1024 * 1024); // Convert bytes to MB
 
         // Calculate used storage by summing the size of all files in the media directory
-        string mediaDirectory = Program.manager.getDirectory();
+        string mediaDirectory = Program.manager._directoryPath;
         long usedStorageInBytes = Directory.GetFiles(mediaDirectory, "*", SearchOption.AllDirectories)
             .Sum(file => new FileInfo(file).Length);
-        long usedStorageInMB = usedStorageInBytes / (1024 * 1024); // Convert bytes to MB
 
         // Calculate the percentage of storage used
         double storageUsedPercentage = (double)usedStorageInBytes / totalStorageInBytes * 100;
 
+        // Convert total and used storage to human-readable format
+        string usedStorageFormatted = FormatSize(usedStorageInBytes);
+        string totalStorageFormatted = FormatSize(totalStorageInBytes);
+
         // Generate camera statistics
         var _camStats_ = "";
-        int i = 0;
+        var i = 0;
         foreach (Camera cam in Cameras.All())
         {
             // Fetch stats for the current camera
@@ -1248,9 +1252,12 @@ updatePreview();
 
             // Build the HTML for each camera's statistics
             var m = "style='margin-top:60px;'";
-            if (i != 0) m = "";
+            if (i != 0)
+            {
+                m = "";
+            }
             _camStats_ += $@"
-        <div class=""camera-stats-card"" "+m+$@">
+        <div class=""camera-stats-card"" {m}>
             <h3>{cam.CameraName}</h3>
             <p><strong>Total Recordings:</strong> {totalRecordings}</p>
             <p><strong>Total Motion Detections:</strong> {totalMotionDetections}</p>
@@ -1331,7 +1338,6 @@ updatePreview();
             border-radius: 25px;
             margin-bottom: 20px;
             position: relative; /* Add this to ensure child elements position properly */
-
         }}
         .progress-bar {{
             width: {storageUsedPercentage:F2}%;
@@ -1386,7 +1392,7 @@ updatePreview();
         <!-- Progress Bar for Storage -->
         <div class=""progress-bar-container"">
             <div class=""progress-bar""></div>
-            <div class=""progress-text"">{storageUsedPercentage:F2}% used ({usedStorageInMB} MB of {totalStorageInMB} MB)</div>
+            <div class=""progress-text"">{storageUsedPercentage:F2}% used ({usedStorageFormatted} of {totalStorageFormatted})</div>
         </div>
 
         {_camStats_}
@@ -1407,6 +1413,24 @@ updatePreview();
     }
 
 
+    public static string FormatSize(long bytes)
+    {
+        const long KB = 1024;
+        const long MB = KB * 1024;
+        const long GB = MB * 1024;
+        const long TB = GB * 1024;
+
+        if (bytes < KB)
+            return $"{bytes} B"; // Bytes
+        else if (bytes < MB)
+            return $"{(bytes / (double)KB):F2} KB"; // Kilobytes
+        else if (bytes < GB)
+            return $"{(bytes / (double)MB):F2} MB"; // Megabytes
+        else if (bytes < TB)
+            return $"{(bytes / (double)GB):F2} GB"; // Gigabytes
+        else
+            return $"{(bytes / (double)TB):F2} TB"; // Terabytes
+    }
 
 
 }
