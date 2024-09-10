@@ -1227,8 +1227,7 @@ updatePreview();
 
         // Calculate used storage by summing the size of all files in the media directory
         string mediaDirectory = Program.manager._directoryPath;
-        long usedStorageInBytes = Directory.GetFiles(mediaDirectory, "*", SearchOption.AllDirectories)
-            .Sum(file => new FileInfo(file).Length);
+        long usedStorageInBytes = Program.manager.CalculateDirectorySize(mediaDirectory);
 
         // Calculate the percentage of storage used
         double storageUsedPercentage = (double)usedStorageInBytes / totalStorageInBytes * 100;
@@ -1335,7 +1334,7 @@ updatePreview();
         .progress-bar-container {{
             width: 100%;
             background-color: #444;
-            border-radius: 25px;
+            border-radius: 5px;
             margin-bottom: 20px;
             position: relative; /* Add this to ensure child elements position properly */
         }}
@@ -1343,7 +1342,7 @@ updatePreview();
             width: {storageUsedPercentage:F2}%;
             height: 25px;
             background-color: {GetProgressBarColor(storageUsedPercentage)};
-            border-radius: 25px;
+            border-radius: 5px;
             text-align: center;
             line-height: 25px; /* Vertically center text */
             color: white;
@@ -1358,6 +1357,11 @@ updatePreview();
             text-align: center;
             color: white;
             line-height: 25px;
+        }}
+        .progressbar-border{{
+            border:2px solid var(--primary-color);
+            height:25px;
+            border-radius:5px ;
         }}
         /* For WebKit browsers (Chrome, Safari) */
         ::-webkit-scrollbar {{
@@ -1390,9 +1394,11 @@ updatePreview();
         <h1>Camera Statistics</h1>
         
         <!-- Progress Bar for Storage -->
+        <div class='progressbar-border'>
         <div class=""progress-bar-container"">
             <div class=""progress-bar""></div>
             <div class=""progress-text"">{storageUsedPercentage:F2}% used ({usedStorageFormatted} of {totalStorageFormatted})</div>
+        </div>
         </div>
 
         {_camStats_}

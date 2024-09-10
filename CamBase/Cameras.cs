@@ -15,6 +15,19 @@ public class Cameras
         if (File.Exists(filePath))
         {
             list = JsonConvert.DeserializeObject<Dictionary<int, Camera>>(File.ReadAllText(filePath));
+            foreach(Camera cam in list.Values)
+            {
+                var dir1 = Program.manager.getDirectory() + $"\\images\\{cam.CameraIndex}";
+                var dir2 = Program.manager.getDirectory() + $"\\video\\{cam.CameraIndex}";
+                if (!Directory.Exists(dir1))
+                {
+                    Directory.CreateDirectory(dir1);
+                }
+                if (!Directory.Exists(dir2))
+                {
+                    Directory.CreateDirectory(dir2);
+                }
+            }
         }
         else
         {

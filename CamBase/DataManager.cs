@@ -64,15 +64,19 @@
         }
     }
 
-    private long CalculateDirectorySize(string directoryPath)
+    public long CalculateDirectorySize(string directoryPath)
     {
         long totalSize = 0;
 
         // Rekursives Durchlaufen aller Dateien
         foreach (string file in Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories))
         {
-            FileInfo fileInfo = new FileInfo(file);
-            totalSize += fileInfo.Length;
+            try
+            {
+                FileInfo fileInfo = new FileInfo(file);
+                totalSize += fileInfo.Length;
+            }
+            catch { }
         }
 
         return totalSize;
@@ -83,12 +87,20 @@
         // Alle Dateien und Unterverzeichnisse löschen
         foreach (string file in Directory.GetFiles(directoryPath))
         {
-            File.Delete(file);
+            try
+            {
+                File.Delete(file);
+            }
+            catch { }
         }
 
         foreach (string dir in Directory.GetDirectories(directoryPath))
         {
-            Directory.Delete(dir, true); // true, um Unterverzeichnisse rekursiv zu löschen
+            try
+            {
+                Directory.Delete(dir, true); // true, um Unterverzeichnisse rekursiv zu löschen
+            }
+            catch { }
         }
     }
 }

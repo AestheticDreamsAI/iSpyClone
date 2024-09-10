@@ -48,7 +48,6 @@ class Program
     public static DataManager manager;
     static async Task Main(string[] args)
     {
-        
         Config config = new Config();
         if (!File.Exists(".\\config.json"))
             config.Save();
@@ -56,13 +55,15 @@ class Program
         Header(Name, Version);
         //config.SavingDir = "h:\\media";
         string directoryPath = config.SavingDir;
-        Cameras.Load();
 
         manager = new DataManager(directoryPath, 5); // Überprüfung alle 5 Minuten
         string[] prefixes = { "http://*:8040/" };
 
         // Start HTTP server on a separate thread
         var server = new HttpServer(prefixes);
+
+        Cameras.Load();
+
         using (CancellationTokenSource cts = new CancellationTokenSource())
         {
             // Fange das Ctrl-C oder Schließen der Konsole ab
