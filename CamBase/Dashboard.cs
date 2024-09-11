@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AForge.Vision.Motion;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -695,7 +696,7 @@ setImageSrcFromBlob(cameraImg, blob);
 
                     // Restart the live feed fetching
                     startLiveFeed();
-                }}, 10000);
+                }}, {Motion.recording_time/2*1000});
                 }}, 1000);
 
 

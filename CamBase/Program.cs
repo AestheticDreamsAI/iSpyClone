@@ -76,7 +76,6 @@ class Program
                 Header(Name, Version);
                 Console.ForegroundColor = ConsoleColor.Magenta;
                 Console.WriteLine("Exiting...");
-                await Task.Delay(2000);
             }
             catch (OperationCanceledException)
             {
