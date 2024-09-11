@@ -57,8 +57,9 @@
     }
 
     // Diese Methode wird als Hintergrundtask ausgeführt, um regelmäßig zu überprüfen
-    public static async Task StartMonitoring(CancellationTokenSource cts) // Änderung hier: Verwende CancellationTokenSource statt CancellationToken
+    public static async Task StartMonitoring(CancellationTokenSource cts,int MaxCamFails = 2) // Änderung hier: Verwende CancellationTokenSource statt CancellationToken
     {
+        MaxInactiveCameras = MaxCamFails;
         Console.WriteLine("- Recording Monitor started...");
         while (!cts.Token.IsCancellationRequested)
         {

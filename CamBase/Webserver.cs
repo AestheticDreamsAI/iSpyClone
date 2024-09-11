@@ -265,10 +265,16 @@ public class HttpServer
                 context.Response.ContentType = "text/html";
                 return await Dashboard.EditPage(index);
             }
-        }else if (path.Contains("/stats"))
+        }
+        else if (path.Contains("/stats"))
         {
-                context.Response.ContentType = "text/html";
-                return await Dashboard.CameraStatisticsPage();
+            context.Response.ContentType = "text/html";
+            return await Dashboard.CameraStatisticsPage();
+        }
+        else if (path.Contains("/logs"))
+        {
+            context.Response.ContentType = "text/html";
+            return await Dashboard.LogPage();
         }
         return "<html><body><h1>404 Not Found</h1></body></html>";
         

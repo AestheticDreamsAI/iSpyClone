@@ -10,44 +10,18 @@ using Colorful;
 using Newtonsoft.Json;
 using Console = System.Console;
 
-using System;
-using System.IO;
-using Newtonsoft.Json;
-
-public class Config
-{
-    public string SavingDir { get; set; } = ".\\media";
-
-    // Method to load configuration from a file
-    public static Config Load(string filePath = ".\\config.json")
-    {
-        if (File.Exists(filePath))
-        {
-            var json = File.ReadAllText(filePath);
-            return JsonConvert.DeserializeObject<Config>(json);
-        }
-        else
-        {
-            return new Config();
-        }
-    }
-
-    // Method to save the current configuration to a file
-    public void Save(string filePath = ".\\config.json")
-    {
-        var json = JsonConvert.SerializeObject(this, Formatting.Indented);
-        File.WriteAllText(filePath, json);
-    }
-}
-
 class Program
 {
     private static string Name = "iSpyClone";
     private static string Version = "Preview 2";
-
     public static DataManager manager;
+    public static CustomTextWriter logWriter;
     static async Task Main(string[] args)
     {
+        TextWriter originalOut = Console.Out;
+        logWriter = new CustomTextWriter(originalOut);
+        Console.SetOut(logWriter);
+        
         Config config = new Config();
         if (!File.Exists(".\\config.json"))
             config.Save();
@@ -57,7 +31,7 @@ class Program
         string directoryPath = config.SavingDir;
 
         manager = new DataManager(directoryPath, 5); // Überprüfung alle 5 Minuten
-        string[] prefixes = { "http://*:8040/" };
+        string[] prefixes = { $"http://*:{config.WebserverPort.ToString()}/" };
 
         // Start HTTP server on a separate thread
         var server = new HttpServer(prefixes);
@@ -80,7 +54,7 @@ class Program
             Task memoryCleanerTask = Task.Run(async () => await MemoryCleaner.StartAsync(cts.Token));
             Task detectionTask = Task.Run(async () => await Motion.StartDetection(cts.Token, 1));
             Task FileManagerTask = Task.Run(async () => await manager.StartMonitoring(cts.Token));
-            Task monitoringTask = Task.Run(async () => await RecordingMonitor.StartMonitoring(cts));
+            Task monitoringTask = Task.Run(async () => await RecordingMonitor.StartMonitoring(cts,config.MaxCamFails));
 
             CameraStatistics.LoadStatistics();
 
@@ -93,8 +67,8 @@ class Program
             }
 
             CameraStatistics.SaveStatistics();
+            config.Save();
             server.Stop();
-            await Task.Delay(2000);
             try
             {
                 await Task.WhenAll(serverTask, monitoringTask, detectionTask, memoryCleanerTask, FileManagerTask);

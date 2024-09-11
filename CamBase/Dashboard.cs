@@ -10,7 +10,57 @@ using static CameraStatistics;
 
 internal class Dashboard
 {
+    static string GetNav()
+    {
+        return @"
+<div class=""navbar"">
+    <a id=""menu-icon"" class=""menu-icon"" onclick=""toggleMenu()"" style='font-size:30px;'>☰</a>
+    <div id=""menu-items"" class=""menu-items"">
+        <a href=""../"">Home</a>
+        <a href=""../logs"">Logs</a>
+        <a href=""../stats"">Statistics</a>
+        <a href=""../add"" class=""addCam"">Add Camera</a>
+    </div>
+</div>
 
+<script>
+    function toggleMenu() {
+        var menuIcon = document.getElementById(""menu-icon"");
+        var menu = document.getElementById(""menu-items"");
+        if (menu.style.display === ""none"" || menu.style.display === """") {
+            menu.style.display = ""flex"";
+            menuIcon.style.display='none';
+        } else {
+            menu.style.display = ""none"";
+        }
+    }
+document.addEventListener(""DOMContentLoaded"", function() {
+
+    function checkWindowSize() {
+        var menuIcon = document.getElementById(""menu-icon"");
+        var menuItems = document.getElementById(""menu-items"");
+
+        if (window.innerWidth > 700) {
+            // Show full menu, hide hamburger icon
+            menuIcon.style.display = ""none"";
+            menuItems.style.display = ""flex"";
+        } else {
+            // Show hamburger icon, hide full menu
+            menuIcon.style.display = ""block"";
+            menuItems.style.display = ""none"";  // Hide the menu until the icon is clicked
+        }
+    }
+
+    // Check window size on load
+    checkWindowSize();
+
+    // Check window size on resize
+    window.onresize = checkWindowSize;
+});
+</script>
+
+";
+    }
     public static async Task<string> HomePage()
     {
         var _camGrids_ = "";
@@ -228,11 +278,7 @@ internal class Dashboard
     </style>
 </head>
 <body>
-    <div class=""navbar"">
-        <a href=""../"">Home</a>
-        <a href=""../stats"">Statistics</a>
-        <a href=""../add"" class='addCam'>Add Camera</a>
-    </div>
+"+GetNav()+@"
 
         <h1>" + Console.Title+@"</h1>
     <div class=""container"">
@@ -506,11 +552,7 @@ text-align:center;
     </style>
 </head>
 <body>
-    <div class=""navbar"">
-        <a href=""../"">Home</a>
-        <a href=""../stats"">Statistics</a>
-        <a href=""../add"" class='addCam'>Add Camera</a>
-    </div>
+"+GetNav()+$@"
 
     <div class='container'>
         <h1>{camera.CameraName}</h1>
@@ -873,11 +915,7 @@ function setImageSrcFromBlob(imgElement, blob) {{
     </style>
 </head>
 <body>
-    <div class=""navbar"">
-        <a href=""../"">Home</a>
-        <a href=""../stats"">Statistics</a>
-        <a href=""../add"" class='addCam'>Add Camera</a>
-    </div>
+"+GetNav()+$@"
 
     <div class=""container"">
         <h1>Edit Camera</h1>
@@ -1137,11 +1175,7 @@ updatePreview();
     </style>
 </head>
 <body>
-    <div class=""navbar"">
-        <a href=""../"">Home</a>
-        <a href=""../stats"">Statistics</a>
-        <a href=""../add"" class='addCam'>Add Camera</a>
-    </div>
+"+GetNav()+@"
 
     <div class=""container"">
         <h1>Add Camera</h1>
@@ -1384,11 +1418,7 @@ updatePreview();
     </style>
 </head>
 <body>
-    <div class=""navbar"">
-        <a href=""../"">Home</a>
-        <a href=""../stats"">Statistics</a>
-        <a href=""../add"" class='addCam'>Add Camera</a>
-    </div>
+{GetNav()}
     <div class=""container"">
         <h1>Camera Statistics</h1>
         
@@ -1405,6 +1435,119 @@ updatePreview();
 </body>
 </html>";
     }
+
+    public static async Task<string> LogPage()
+    {
+        // Erstelle das HTML für die Logs
+        var logsHtml = "        <div class=\"log-card\">";
+        var i = 0;
+        foreach (var log in Program.logWriter.GetEventLog())
+        {
+
+            // Erzeuge HTML für jedes Log-Event
+            logsHtml += $@"
+            <p style=""color: {log.Color};"">{log.Message}</p>";
+        }
+        logsHtml += "</div>";
+        // Rückgabe des vollständigen HTML mit CSS, das zum Rest der Seite passt
+        return $@"
+<!DOCTYPE html>
+<html lang=""en"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Event Logs</title>
+    <link rel=""icon"" type=""image/png"" href=""logo.png"">
+    <meta name='theme-color' content='#333333'>
+    <link rel=""manifest"" href=""manifest.json?t={Guid.NewGuid()}"">
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js'></script>
+    <style>
+        :root {{
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --danger-color: #e74c3c;
+        }}
+        body, html {{
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }}
+        .container {{
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }}
+        h1 {{
+            text-align: center;
+        }}
+        .log-card {{
+            background-color: #2c2c2c;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }}
+        .log-card h3 {{
+            margin-top: 0;
+            color: var(--primary-color);
+        }}
+        .navbar {{
+            display: flex;
+            justify-content: flex-end;
+            background-color: #333;
+            padding: 10px;
+        }}
+        .navbar a {{
+            color: white;
+            padding: 14px 20px;
+            text-decoration: none;
+            text-align: center;
+        }}
+        .navbar a:hover {{
+            background-color: #ddd;
+            color: black;
+        }}
+        .navbar .addCam {{
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 20px;
+        }}
+        /* For WebKit browsers (Chrome, Safari) */
+        ::-webkit-scrollbar {{
+            width: 8px; /* Width of the scrollbar */
+        }}
+        ::-webkit-scrollbar-thumb {{
+            background-color: #444; /* Dark scrollbar color */
+            border-radius: 10px; /* Rounded corners */
+        }}
+        ::-webkit-scrollbar-thumb:hover {{
+            background-color: #555; /* Lighter shade on hover */
+        }}
+        ::-webkit-scrollbar-track {{
+            background-color: #222; /* Dark background for the scrollbar track */
+        }}
+        /* For Firefox */
+        * {{
+            scrollbar-width: thin; /* Thin scrollbar */
+            scrollbar-color: #444 #222; /* Thumb color and track color */
+        }}
+    </style>
+</head>
+<body>
+{GetNav()}
+    <div class=""container"">
+        <h1>Event Logs</h1>
+        
+        <!-- Event Logs Display -->
+        {logsHtml}
+    </div>
+</body>
+</html>";
+    }
+
 
     // Function to determine progress bar color based on percentage
     private static string GetProgressBarColor(double percentage)
