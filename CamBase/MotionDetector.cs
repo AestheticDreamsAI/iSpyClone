@@ -81,6 +81,7 @@ public class Motion
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"- {DateTime.Now.ToLongTimeString()}: {cam.CameraName} - Motion Detected");
         CameraStatistics.MotionDetected(cam);
+        RecordingMonitor.UpdateLastRecordingTime(cam);
         cam.IsRecording = true;
 
         try
@@ -110,7 +111,6 @@ public class Motion
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"- {DateTime.Now.ToLongTimeString()}: {cam.CameraName} - recording succeded");
             Console.ForegroundColor= ConsoleColor.White;
-            RecordingMonitor.UpdateLastRecordingTime(cam);
             CameraStatistics.RecordEnd(cam);
         }
     }

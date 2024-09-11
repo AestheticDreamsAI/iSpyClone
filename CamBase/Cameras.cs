@@ -35,6 +35,13 @@ public class Cameras
             return;
         }
     }
+
+    public static bool isRecording()
+    {
+        // Prüft, ob es Kameras gibt und ob alle inaktiv sind
+        return list.Values.All(cam => cam.IsRecording);
+    }
+
     public static void Save()
     {
         Dictionary<int, Camera> l = new Dictionary<int, Camera>();

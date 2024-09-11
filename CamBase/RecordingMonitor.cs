@@ -66,8 +66,11 @@
             if (CheckIdleCameras())
             {
                 // Wenn 5 oder mehr Kameras inaktiv sind, beenden wir das Programm
-                cts.Cancel(); // Verwende CancellationTokenSource, um die Tasks zu stoppen
-                break;
+                if (!Cameras.isRecording())
+                {
+                    cts.Cancel(); // Verwende CancellationTokenSource, um die Tasks zu stoppen
+                    break;
+                }
             }
 
             await Task.Delay(CheckIntervalInSeconds * 1000); // Überprüfe alle X Sekunden
