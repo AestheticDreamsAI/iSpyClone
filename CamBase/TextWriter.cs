@@ -57,18 +57,24 @@ public class CustomTextWriter : TextWriter
 
     public override void WriteLine(string message)
     {
-        // Speichere die aktuelle Konsolenfarbe
-        var currentColor = Console.ForegroundColor;
+        var m = message;
+        if (!m.Contains(":"))
+        {
+            if (m.Contains("- ") && !m.Contains("--") && !m.Contains("__"))
+            {
+                m = m.Replace("- ", $"- {DateTime.Now.ToLongTimeString()}: ");
+            }
+        }
 
-        // Konvertiere die Konsolenfarbe in einen HTML-Hex-Code
-        string colorHex = ColorConverter.ToHex(currentColor);
+            // Konvertiere die Konsolenfarbe in einen HTML-Hex-Code
+           var currentColor = Console.ForegroundColor;
+            string colorHex = ColorConverter.ToHex(currentColor);
+        if (m.Contains(":"))
+            _eventLog.Add(new ConsoleEvent(m, colorHex));
 
-       if(message.Contains(":"))
-        _eventLog.Add(new ConsoleEvent(message, colorHex));
-
-        // Schreibe die Nachricht in die Konsole
-        _originalOut.WriteLine($"{message}");
-
+            // Schreibe die Nachricht in die Konsole
+            _originalOut.WriteLine($"{message}");
+        
     }
 
     // Methode zum Abrufen aller Ereignisse
