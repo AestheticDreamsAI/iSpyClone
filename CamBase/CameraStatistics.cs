@@ -66,7 +66,7 @@ public class CameraStatistics
             //Console.WriteLine($"No statistics found for camera: {cameraName}");
             return null;
         }
-    }
+    } 
 
     // Save statistics to a JSON file
     public static void SaveStatistics()
