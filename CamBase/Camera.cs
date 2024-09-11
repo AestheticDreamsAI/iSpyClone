@@ -33,6 +33,107 @@ public class Camera
         };
     }
 
+    public byte[] GetRecording(string path)
+    {
+        // Replace the path as per the original logic
+        string filePath = path.Replace(".\\media", Program.manager.getDirectory()) + "\\animated.gif";
+
+        // Check if the file is corrupt before proceeding
+        if (DataChecker.IsFileCorrupt(filePath))
+        {
+            return null; // Return null or handle accordingly when file is corrupt
+        }
+
+        // Load image and convert it to byte array in a using block to dispose the resource properly
+        using (Image image = Image.FromFile(filePath))
+        {
+            return this.ImageToByteArray(image);
+        }
+    }
+
+
+    public long CalculateTotalFrameSize()
+    {
+        long totalSize = 0;
+
+        // Hole das Verzeichnis für die Frame-Dateien der aktuellen Kamera
+        string directoryPath = Path.Combine(Program.manager.getDirectory(), "images", this.CameraIndex.ToString());
+
+        // Prüfe, ob das Verzeichnis existiert
+        if (Directory.Exists(directoryPath))
+        {
+            // Gehe durch alle Unterverzeichnisse
+            foreach (var dir in Directory.GetDirectories(directoryPath))
+            {
+                try
+                {
+                    // Hole den Pfad zu den Frames (z.B. als PNG oder andere Bildformate)
+                    var frames = Directory.GetFiles(dir, "*.jpg"); // oder entsprechendes Format wie "*.bmp" etc.
+
+                    // Gehe durch jede Frame-Datei
+                    foreach (var frame in frames)
+                    {
+                        try
+                        {
+                            var fileInfo = new FileInfo(frame);
+
+                            // Prüfe, ob die Datei existiert und ob sie nicht defekt ist
+                            if (fileInfo.Exists && !DataChecker.IsFileCorrupt(frame))
+                            {
+                                totalSize += fileInfo.Length; // Größe der Datei in Bytes
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Fehlerbehandlung falls nötig
+                            Console.WriteLine($"Fehler beim Überprüfen der Datei {frame}: {ex.Message}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Fehlerbehandlung falls nötig
+                    Console.WriteLine($"Fehler beim Zugriff auf Frames in {dir}: {ex.Message}");
+                }
+            }
+        }
+
+        return totalSize;
+    }
+
+
+
+
+    public List<Recording> GetRecordings()
+    {
+        var recordings = new List<Recording>();
+        foreach (var f in Directory.GetDirectories(Program.manager.getDirectory() + $@"\video\{this.CameraIndex}\", "*.*"))
+        {
+            try
+            {
+                var animated = $@"{f}\\animated.gif";
+                if (!DataChecker.IsFileCorrupt(animated) && File.Exists(animated))
+                {
+                    var recording = new Recording();
+                    var p = Path.GetFileName(f).Replace("_", " ").Replace("-", ".").Split(' ');
+
+                    recording.CameraIndex = this.CameraIndex;
+                    recording.Date = p[0];
+                    recording.Time = p[1].Replace(".", ":");
+                    recording.Path = $"{this.CameraIndex}/{Path.GetFileName(f)}";
+                    recording.Size = new FileInfo(animated).Length; // Size in bytes
+
+                    recordings.Add(recording);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exception if needed
+            }
+        }
+        return recordings;
+    }
+
     public async Task<(Image,bool)> getSnapshot()
     {
         var cameraUrl = CameraUrl

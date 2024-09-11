@@ -64,6 +64,7 @@ class Program
 
         Cameras.Load();
 
+
         using (CancellationTokenSource cts = new CancellationTokenSource())
         {
             // Fange das Ctrl-C oder Schließen der Konsole ab

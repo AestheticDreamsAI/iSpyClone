@@ -319,13 +319,12 @@ function viewCamera(id) {
         try
         {
             camera = Cameras.Get(index);
-            foreach (var f in Directory.GetDirectories(Program.manager.getDirectory()+$@"\video\{camera.CameraIndex}\", "*.*"))
+            foreach (var f in camera.GetRecordings())
             {
-                var p = Path.GetFileName(f).Replace("_"," ").Replace("-",".").Split(' ');
                 _recordings_ += $@"
                 <li class=""recording-item"">
-                    <span>{p[0]} - {p[1].Replace(".",":")} - Motion Detected</span>
-                    <button class=""btn btn-secondary"" onclick=""playRecording('{camera.CameraIndex}/{Path.GetFileName(f)}')"">Play</button>
+                    <span>{f.Date} - {f.Time} - Motion Detected</span>
+                    <button class=""btn btn-secondary"" onclick=""playRecording('{f.Path}')"">Play</button>
                 </li>";
             }
         }
@@ -1226,8 +1225,8 @@ updatePreview();
         long totalStorageInBytes = Program.manager.getMaxSize();
 
         // Calculate used storage by summing the size of all files in the media directory
-        string mediaDirectory = Program.manager._directoryPath;
-        long usedStorageInBytes = Program.manager.CalculateDirectorySize(mediaDirectory);
+        string mediaDirectory = Program.manager.getDirectory();
+        long usedStorageInBytes = Program.manager.CalculateDirectorySize(Cameras.All());
 
         // Calculate the percentage of storage used
         double storageUsedPercentage = (double)usedStorageInBytes / totalStorageInBytes * 100;

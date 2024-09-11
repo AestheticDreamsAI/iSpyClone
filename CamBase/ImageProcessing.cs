@@ -35,9 +35,7 @@ using System.Threading.Tasks;
         var camera = new Camera();
         try
         {
-            var f = Directory.GetFiles(path.Replace(".\\media",Program.manager.getDirectory()), "*.*");
-            var t = f.FirstOrDefault();
-            return camera.ImageToByteArray(Image.FromFile(t));
+            return camera.GetRecording(path);
         }
         catch (Exception ex)
         {
@@ -64,7 +62,7 @@ using System.Threading.Tasks;
     }
     private static async Task CreateGif(string cameraIndex, string timestamp, List<string> imageFiles)
     {
-        string gifFolderPath = Path.Combine(Program.manager._directoryPath, "video", cameraIndex, timestamp);
+        string gifFolderPath = Path.Combine(Program.manager.getDirectory(), "video", cameraIndex, timestamp);
         Directory.CreateDirectory(gifFolderPath); // Sicherstellen, dass das Verzeichnis existiert
 
         string gifFilePath = Path.Combine(gifFolderPath, "animated.gif");
@@ -73,19 +71,23 @@ using System.Threading.Tasks;
         {
             foreach (var imagePath in imageFiles)
             {
-                var image = new MagickImage(imagePath);
-                image.AnimationDelay = 50; // Frame-Delay setzen (anpassbar)
+                if(!DataChecker.IsFileCorrupt(imagePath)) 
+                    {
+                        var image = new MagickImage(imagePath);
+                        image.AnimationDelay = 50; // Frame-Delay setzen (anpassbar)
 
-                // Reduziere die Bildgröße (optional, um die Dateigröße zu reduzieren)
-                image.Resize(300, 0); // z.B. auf 300px Breite skalieren, Höhe proportional
+                        // Reduziere die Bildgröße (optional, um die Dateigröße zu reduzieren)
+                        image.Resize(300, 0); // z.B. auf 300px Breite skalieren, Höhe proportional
 
-                // Reduziere die Farbanzahl (z.B. auf 128 Farben, um die Dateigröße zu minimieren)
-                image.Quantize(new QuantizeSettings
-                {
-                    Colors = 128
-                });
+                        // Reduziere die Farbanzahl (z.B. auf 128 Farben, um die Dateigröße zu minimieren)
+                        image.Quantize(new QuantizeSettings
+                        {
+                            Colors = 128
+                        });
 
-                collection.Add(image);
+                        collection.Add(image);
+                    }
+                        File.Delete(imagePath);
             }
 
             // GIF optimieren (entfernt redundante Frames, reduziert die Größe weiter)

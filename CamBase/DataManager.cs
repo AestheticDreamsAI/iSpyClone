@@ -1,106 +1,137 @@
 ﻿public class DataManager
 {
-    public string _directoryPath;
-    public long MaxSizeInBytes = 1L * 50 * 1024 * 1024 * 1024; // 2 GB in Bytes
-    private int _checkIntervalInMinutes;
+    private readonly string _directoryPath;
+    private readonly long _maxSizeInBytes;
+    private readonly int _checkIntervalInMinutes;
+
+    public DataManager(string directoryPath, int checkIntervalInMinutes = 5, long maxSizeInBytes = 50L * 1024 * 1024 * 1024) // 50 GB in Bytes
+    {
+        _directoryPath = directoryPath;
+        _checkIntervalInMinutes = checkIntervalInMinutes;
+        _maxSizeInBytes = maxSizeInBytes;
+        Directory.CreateDirectory(directoryPath);
+    }
 
     public string getDirectory()
     {
         return _directoryPath;
     }
-    public DataManager(string directoryPath, int checkIntervalInMinutes = 5)
-    {
-        _directoryPath = directoryPath;
-        _checkIntervalInMinutes = checkIntervalInMinutes;
-        Directory.CreateDirectory(directoryPath);
-    }
 
     public long getMaxSize()
     {
-        return MaxSizeInBytes; 
+        return MaxSizeInBytes;
     }
+
+
+    public string DirectoryPath => _directoryPath;
+    public long MaxSizeInBytes => _maxSizeInBytes;
 
     public async Task StartMonitoring(CancellationToken cancellationToken)
     {
-                Console.WriteLine("- File Manager started...");
+        Console.WriteLine("- File Manager started...");
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
-                CheckAndClearIfExceedsLimit();
+                await CheckAndClearIfExceedsLimitAsync();
 
                 // Warte die angegebene Zeit (in Minuten) vor der nächsten Überprüfung
                 await Task.Delay(TimeSpan.FromMinutes(_checkIntervalInMinutes), cancellationToken);
             }
-            catch { }
+            catch (TaskCanceledException)
+            {
+                // Task wurde abgebrochen
+                break;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Fehler beim Monitoring: {ex.Message}");
+            }
         }
         Console.WriteLine("- File Manager stopped...");
     }
 
-    private void CheckAndClearIfExceedsLimit()
+    private async Task CheckAndClearIfExceedsLimitAsync()
     {
         try
         {
-            long totalSize = CalculateDirectorySize(_directoryPath);
+            long totalSize = CalculateDirectorySize(Cameras.All());
             Console.ForegroundColor = ConsoleColor.DarkCyan;
             Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Snapshots-Size: {totalSize / (1024 * 1024)} MB");
 
-            if (totalSize > MaxSizeInBytes)
+            if (totalSize > _maxSizeInBytes)
             {
-                ClearDirectory(_directoryPath);
+                await ClearDirectoryAsync(_directoryPath);
                 Console.ForegroundColor = ConsoleColor.DarkCyan;
                 Console.WriteLine($"- {DateTime.Now.ToLongTimeString()}: Snapshots deleted.");
-                totalSize = CalculateDirectorySize(_directoryPath);
+
+                totalSize = CalculateDirectorySize(Cameras.All());
                 Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Snapshots-Size: {totalSize / (1024 * 1024)} MB");
                 Console.ForegroundColor = ConsoleColor.White;
-            }
-            else
-            {
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Fehler: {ex.Message}");
+            Console.WriteLine($"Fehler beim Prüfen der Größe: {ex.Message}");
         }
     }
 
-    public long CalculateDirectorySize(string directoryPath)
+    public long CalculateDirectorySize(List<Camera> cameras)
     {
         long totalSize = 0;
-
-        // Rekursives Durchlaufen aller Dateien
-        foreach (string file in Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories))
+        try
         {
-            try
+            foreach (Camera camera in cameras)
             {
-                FileInfo fileInfo = new FileInfo(file);
-                totalSize += fileInfo.Length;
+                //totalSize += camera.CalculateTotalFrameSize();
+                foreach (Recording rec in camera.GetRecordings())
+                {
+                    totalSize += rec.Size; // Annahme: Die Aufnahme hat eine `Size`-Eigenschaft
+                }
             }
-            catch { }
         }
-
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
         return totalSize;
     }
 
-    private void ClearDirectory(string directoryPath)
+    private async Task ClearDirectoryAsync(string directoryPath)
     {
-        // Alle Dateien und Unterverzeichnisse löschen
+        // Alle Dateien und Unterverzeichnisse asynchron löschen
+        var tasks = new List<Task>();
+
         foreach (string file in Directory.GetFiles(directoryPath))
         {
-            try
+            tasks.Add(Task.Run(() =>
             {
-                File.Delete(file);
-            }
-            catch { }
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Fehler beim Löschen von {file}: {ex.Message}");
+                }
+            }));
         }
 
         foreach (string dir in Directory.GetDirectories(directoryPath))
         {
-            try
+            tasks.Add(Task.Run(() =>
             {
-                Directory.Delete(dir, true); // true, um Unterverzeichnisse rekursiv zu löschen
-            }
-            catch { }
+                try
+                {
+                    Directory.Delete(dir, true); // true, um Unterverzeichnisse rekursiv zu löschen
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Fehler beim Löschen von Verzeichnis {dir}: {ex.Message}");
+                }
+            }));
         }
+
+        await Task.WhenAll(tasks); // Warten, bis alle Löschvorgänge abgeschlossen sind
     }
 }
