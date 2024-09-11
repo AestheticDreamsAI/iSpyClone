@@ -13,7 +13,7 @@ using Console = System.Console;
 class Program
 {
     private static string Name = "iSpyClone";
-    private static string Version = "Preview 2";
+    private static string Version = "Preview 3";
     public static DataManager manager;
     public static CustomTextWriter logWriter;
     static async Task Main(string[] args)
@@ -79,7 +79,7 @@ class Program
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("Tasks wurden abgebrochen.");
+                Console.WriteLine("Tasks has been canceled.");
             }
         }
 

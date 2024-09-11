@@ -37,7 +37,7 @@
                 if (timeSinceLastRecording.TotalSeconds > MaxIdleTimeInSeconds)
                 {
                     inactiveCamerasCount++;
-                    Console.WriteLine($"- {DateTime.Now.ToLongTimeString()}: {cam.CameraName} - Keine Aufnahme seit {Math.Round(timeSinceLastRecording.TotalMinutes)} Minuten.");
+                    Console.WriteLine($"- {DateTime.Now.ToLongTimeString()}: {cam.CameraName} - No recording for {Math.Round(timeSinceLastRecording.TotalMinutes)} minutes.");
                 }
             }
             else
@@ -66,7 +66,7 @@
             if (CheckIdleCameras())
             {
                 // Wenn 5 oder mehr Kameras inaktiv sind, beenden wir das Programm
-                if (!Cameras.isRecording())
+                if (!Cameras.RecordingState())
                 {
                     cts.Cancel(); // Verwende CancellationTokenSource, um die Tasks zu stoppen
                     break;

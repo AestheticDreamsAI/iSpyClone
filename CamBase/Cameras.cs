@@ -36,7 +36,7 @@ public class Cameras
         }
     }
 
-    public static bool isRecording()
+    public static bool RecordingState()
     {
         // Prüft, ob es Kameras gibt und ob alle inaktiv sind
         return list.Values.All(cam => cam.IsRecording);
