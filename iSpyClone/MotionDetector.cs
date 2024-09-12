@@ -60,9 +60,9 @@ public class Motion
     private static async Task StartRecordingSafely(Camera cam)
     {
         // Prüfe, ob die Kamera schon aufnimmt, und starte nur, wenn sie es nicht tut
-        if (Program.manager.DirectoryPath.Contains(":"))
+        if (Program.manager.getDirectory().Contains(":"))
         {
-            if (!DataChecker.IsDriveAvailable(Program.manager.DirectoryPath.Split(':')[0].ToString()))
+            if (!DataChecker.IsDriveAvailable(Program.manager.getDirectory().Split(':')[0].ToString()))
             {
                 return;
             }
