@@ -185,7 +185,7 @@ using System.Threading.Tasks;
                         // Reduziere die Farbanzahl (z.B. auf 128 Farben, um die Dateigröße zu minimieren)
                         image.Quantize(new QuantizeSettings
                         {
-                            Colors = 128
+                            Colors = Program.config.Quality
                         });
 
                         collection.Add(image);

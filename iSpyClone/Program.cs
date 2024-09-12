@@ -17,13 +17,14 @@ class Program
     private static string Version = "Preview 4";
     public static DataManager manager;
     public static CustomTextWriter logWriter;
+    public static Config config;
     static async Task Main(string[] args)
     {
         TextWriter originalOut = Console.Out;
         logWriter = new CustomTextWriter(originalOut);
         Console.SetOut(logWriter);
         
-        Config config = new Config();
+        config = new Config();
         if (!File.Exists(".\\config.json"))
             config.Save();
         else config = Config.Load();
@@ -31,7 +32,7 @@ class Program
         //config.SavingDir = "h:\\media";
         string directoryPath = config.SavingDir;
 
-        manager = new DataManager(directoryPath, 5); // Überprüfung alle 5 Minuten
+        manager = new DataManager(directoryPath, 5,(long)config.MaxSpaceUsage); // Überprüfung alle 5 Minuten
         string[] prefixes = { $"http://*:{config.WebserverPort.ToString()}/" };
 
         // Start HTTP server on a separate thread

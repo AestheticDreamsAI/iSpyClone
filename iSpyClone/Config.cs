@@ -3,8 +3,12 @@
 public class Config
 {
     public string SavingDir { get; set; } = ".\\media";
+    public int MaxSpaceUsage { get; set; } = 5;
     public int WebserverPort { get; set; } = 8040;
     public int MaxCamFails { get; set; } = 3;
+    public int Quality { get; set; } = 255;
+    public int MaxMemoryUsage { get; set; } = 500;
+
 
     // Method to load configuration from a file
     public static Config Load(string filePath = ".\\config.json")

@@ -4,8 +4,9 @@
     private readonly long _maxSizeInBytes;
     private readonly int _checkIntervalInMinutes;
 
-    public DataManager(string directoryPath, int checkIntervalInMinutes = 5, long maxSizeInBytes = 50L * 1024 * 1024 * 1024) // 50 GB in Bytes
+    public DataManager(string directoryPath, int checkIntervalInMinutes = 5, long maxSizeInBytes = 2) // 50 GB in Bytes
     {
+        maxSizeInBytes = maxSizeInBytes * 1024 * 1024 * 1024;
         _directoryPath = directoryPath;
         _checkIntervalInMinutes = checkIntervalInMinutes;
         _maxSizeInBytes = maxSizeInBytes;

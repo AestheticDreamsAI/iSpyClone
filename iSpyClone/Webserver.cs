@@ -235,12 +235,17 @@ public class HttpServer
                 {
                     try
                     {
+                        var s = path.Replace("/media/download/", "").Split('/');
+                        var i = Convert.ToInt32(s[0]);
+                        
                         path = $"{path.Replace("/", "\\").Replace("download","video").Replace("\\media", Program.manager.getDirectory())}\\animated.gif";
                         // Extrahiere die Frames als Base64-Strings
                         byte[] imageData = await ImageProcessing.ConvertGifToVideo($"{path}");
                         if (imageData != null)
                         {
+                            var filename = $"{Cameras.Get(i).CameraName.Replace(" ","_")}_{s[1]}.mp4";
                             context.Response.ContentType = "application/octet-stream";
+                            context.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
                             context.Response.ContentLength64 = imageData.Length;
                             await context.Response.OutputStream.WriteAsync(imageData, 0, imageData.Length);
                             context.Response.OutputStream.Close();

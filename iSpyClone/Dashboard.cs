@@ -372,7 +372,7 @@ function viewCamera(id) {
                 _recordings_ += $@"
                 <li class=""recording-item"">
                     <span>{f.Date} - {f.Time} - Motion Detected</span>
-                     <a href='/media/download/{f.Path}' download='{camera.CameraName}_{f.Path.Split('/')[1]}.mp4'><button class=""btn"" style='background-color:#444; color:white;'><i class=""fa-solid fa-download""></i></button></a><button class=""btn btn-primary"" onclick=""showFrames('{f.Path}')""><i class=""fa-regular fa-image""></i></button><button class=""btn btn-secondary"" onclick=""playRecording('{f.Path}')""><i class=""fa-solid fa-play""></i></button>
+                     <button class=""btn"" style='background-color:#444; color:white;' onclick=""Download('{f.Path}')""><i class=""fa-solid fa-download""></i></button><button class=""btn btn-primary"" onclick=""showFrames('{f.Path}')""><i class=""fa-regular fa-image""></i></button><button class=""btn btn-secondary"" onclick=""playRecording('{f.Path}')""><i class=""fa-solid fa-play""></i></button>
                 </li>";
             }
         }
@@ -571,7 +571,8 @@ text-align:center;
   background-color: var(--card-bg);
   margin: 15% auto;
   padding: 10px;
-  width: 80%;
+  width: 100%;
+max-width:1000px;
   height:auto;
   text-align: center;
   position: relative;
@@ -586,6 +587,7 @@ text-align:right;
 margin-bottom:-50px;
 width:100%;
 z-index:1000;
+margin-right:20px;
 }}
 
 .close:hover,
@@ -738,11 +740,30 @@ function formatDateTime(input) {{
 }}
 
 // Modal open/close logic
+window.Download = function(recordingPath)
+{{
+        const download = `/media/download/${{recordingPath}}?t=${{Date.now()}}`;
+            // Zeige das Modal
+            const modal = document.getElementById('framesModal');
+            modal.style.display = ""block"";
+            document.querySelector('.modal-content').style.height='100px';
+    document.getElementById('prevFrame').style.display = ""none"";
+    document.getElementById('nextFrame').style.display = ""none"";
+    document.querySelector('#modal-title').innerHTML='Download will start soon...';
+document.getElementById('frameImage').src='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+setTimeout(function() {{
+    window.location.href = window.location.origin + download;
+    modal.style.display='none';
+}}, 2000);
+}}
+
 window.showFrames = function(recordingPath) {{
     const framesUrl = `../media/frames/${{recordingPath}}?t=${{Date.now()}}`;
             // Zeige das Modal
             const modal = document.getElementById('framesModal');
+modal.style.height='100%';
             modal.style.display = ""block"";
+            document.querySelector('.modal-content').style.height='auto';
     document.getElementById('prevFrame').style.display = ""none"";
     document.getElementById('nextFrame').style.display = ""none"";
     document.querySelector('#modal-title').innerHTML='loading ...';
@@ -770,7 +791,8 @@ window.playRecording = function(recordingPath) {{
     const gifUrl = `../media/video/${{recordingPath}}?t=${{Date.now()}}`;
             const modal = document.getElementById('framesModal');
             modal.style.display = ""block"";
-
+            document.querySelector('.modal-content').style.height='auto';
+modal.style.height='100%';
     document.querySelector('#modal-title').innerHTML='loading ...';
     // Slider-Buttons ausblenden
 

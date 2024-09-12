@@ -8,10 +8,11 @@ namespace CamBase
     internal class MemoryCleaner
     {
         // Definiere den Schwellenwert (300 MB = 300 * 1024 * 1024 Bytes)
-        private const long MemoryThreshold = 300 * 1024 * 1024;
+        private static long MemoryThreshold;
 
         public static async Task StartAsync(CancellationToken cts)
         {
+            MemoryThreshold = Program.config.MaxMemoryUsage * 1024 * 1024;
             Console.WriteLine("- Memory Cleaner started...");
             while (!cts.IsCancellationRequested)
             {
