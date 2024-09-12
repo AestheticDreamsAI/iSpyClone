@@ -205,6 +205,58 @@ public class HttpServer
                         return;
                     }
                 }
+                else if (path.Contains("/frames/"))
+                {
+                    try
+                    {
+                        // Extrahiere die Frames als Base64-Strings
+                        var frames = ImageProcessing.ExtractGifFramesAsBase64(path.Replace("/", "\\").Replace("\\media\\frames", Program.manager.getDirectory() + "\\video"));
+
+                        // Konvertiere die Frames in JSON
+                        var jsonResponse = Newtonsoft.Json.JsonConvert.SerializeObject(frames);
+                        var jbuffer = Encoding.UTF8.GetBytes(jsonResponse);
+
+                        // Sende die JSON-Antwort zurück
+                        context.Response.ContentType = "application/json";
+                        context.Response.ContentLength64 = jbuffer.Length;
+                        await context.Response.OutputStream.WriteAsync(jbuffer, 0, jbuffer.Length);
+                        context.Response.OutputStream.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error extracting frames: {ex.Message}");
+                        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                        await context.Response.OutputStream.WriteAsync(Encoding.UTF8.GetBytes("Error extracting frames"), 0, "Error extracting frames".Length);
+                    }
+                    return;
+
+                }
+                else if (path.Contains("/download/"))
+                {
+                    try
+                    {
+                        path = $"{path.Replace("/", "\\").Replace("download","video").Replace("\\media", Program.manager.getDirectory())}\\animated.gif";
+                        // Extrahiere die Frames als Base64-Strings
+                        byte[] imageData = await ImageProcessing.ConvertGifToVideo($"{path}");
+                        if (imageData != null)
+                        {
+                            context.Response.ContentType = "application/octet-stream";
+                            context.Response.ContentLength64 = imageData.Length;
+                            await context.Response.OutputStream.WriteAsync(imageData, 0, imageData.Length);
+                            context.Response.OutputStream.Close();
+                            return;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error extracting frames: {ex.Message}");
+                        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                        await context.Response.OutputStream.WriteAsync(Encoding.UTF8.GetBytes("Error extracting frames"), 0, "Error extracting frames".Length);
+                    }
+                    return;
+
+                }
+
 
                 // Handle other requests (assumed to be text/HTML)
                 string responseString = await GetPageContent(context, path);

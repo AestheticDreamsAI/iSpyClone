@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Printing;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -68,7 +69,7 @@ document.addEventListener(""DOMContentLoaded"", function() {
         foreach (Camera cam in Cameras.All())
         {
             var detection = cam.IsRecording;
-            var isRecording = detection ? "<i class=\"fas fa-record-vinyl\" style=\"color: red;\"></i> Recording" : "-";
+            var isRecording = detection ? "<i class=\"fas fa-record-vinyl\" style=\"color: red;\"></i> Recording" : "Inactive";
             _camGrids_ += @"
                 <div class=""camera-card"">
                     <div class=""camera-image"">            <div class='connecting-overlay'>Connecting...</div><img src='/stream/" + cam.CameraIndex + @"'></div>
@@ -309,7 +310,7 @@ function updateCameraGrid(data) {
 
     cameras.forEach(cam => {
         const isRecording = cam.IsRecording ? 
-            ""<i class=\""fas fa-record-vinyl\"" style=\""color: red;\""></i> Recording"" : ""-"";
+            ""<i class=\""fas fa-record-vinyl\"" style=\""color: red;\""></i> Recording"" : ""Inactive"";
 
         // Hier fügen wir einen Cache-Busting Parameter (Zeitstempel) hinzu
         const imgUrl = `/stream/${cam.CameraIndex}?t=${new Date().getTime()}`;
@@ -371,7 +372,7 @@ function viewCamera(id) {
                 _recordings_ += $@"
                 <li class=""recording-item"">
                     <span>{f.Date} - {f.Time} - Motion Detected</span>
-                    <button class=""btn btn-secondary"" onclick=""playRecording('{f.Path}')"">Play</button>
+                     <a href='/media/download/{f.Path}' download='{camera.CameraName}_{f.Path.Split('/')[1]}.mp4'><button class=""btn"" style='background-color:#444; color:white;'><i class=""fa-solid fa-download""></i></button></a><button class=""btn btn-primary"" onclick=""showFrames('{f.Path}')""><i class=""fa-regular fa-image""></i></button><button class=""btn btn-secondary"" onclick=""playRecording('{f.Path}')""><i class=""fa-solid fa-play""></i></button>
                 </li>";
             }
         }
@@ -388,7 +389,11 @@ function viewCamera(id) {
     <meta charset='UTF-8'>
     <title>View Camera-Security Camera WebUI</title>
 <link rel=""manifest"" href=""manifest.json"">
-          <script src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js'></script>
+      <link
+        rel=""stylesheet""
+        href=""https://site-assets.fontawesome.com/releases/v6.6.0/css/all.css""
+      >
+
 <meta charset='UTF-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <style>
@@ -549,11 +554,138 @@ text-align:center;
     scrollbar-color: #444 #222; /* Thumb color and track color */
 }}
 
+/* Modal Styles */
+.modal {{
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+}}
+
+.modal-content {{
+  background-color: var(--card-bg);
+  margin: 15% auto;
+  padding: 10px;
+  width: 80%;
+  height:auto;
+  text-align: center;
+  position: relative;
+            border-radius: 8px;
+}}
+
+.close {{
+  color: var(--primary-color);
+  font-size: 28px;
+  font-weight: bold;
+text-align:right;
+margin-bottom:-50px;
+width:100%;
+z-index:1000;
+}}
+
+.close:hover,
+.close:focus {{
+  color: var(--secondary-color);
+  text-decoration: none;
+  cursor: pointer;
+}}
+
+/* Slider Container */
+#framesSlider {{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+}}
+
+#framesSlider button {{
+  padding: 10px 20px;
+  margin: 0 10px;
+  cursor: pointer;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}}
+
+#framesSlider button:hover {{
+  background-color: #2980b9;
+}}
+
+/* Styling for the image */
+#framesSlider img {{
+  width: 100%;  /* Maximale Breite des Bildes innerhalb des Containers */
+  height: auto;     /* Proportionen beibehalten */
+  border-radius: 5px;
+}}
+
+/* Media Queries for smaller screens (e.g. smartphones) */
+@media (max-width: 768px) {{
+  .modal-content {{
+    width: 95%; /* Für kleinere Bildschirme sollte das Modal fast den gesamten Bildschirm nutzen */
+  }}
+
+  #framesSlider {{
+    flex-direction: column;  /* Für schmale Bildschirme wird der Slider vertikal angeordnet */
+  }}
+
+  #framesSlider img {{
+    width: 100%; /* Das Bild nimmt die gesamte Breite des Containers auf kleinen Bildschirmen ein */
+  }}
+
+  #framesSlider button {{
+    padding: 15px;
+    width: 80%; /* Die Buttons werden breiter und passen sich der Bildschirmbreite an */
+    margin-bottom: 10px;
+  }}
+}}
+
+@media (max-width: 480px) {{
+  .modal-content {{
+    width: 90%;
+  }}
+
+  #framesSlider {{
+    flex-direction: column;
+  }}
+
+  #framesSlider button {{
+    width: 100%; /* Buttons füllen den gesamten Bereich aus */
+    font-size: 18px; /* Größere Schrift für bessere Lesbarkeit auf kleinen Geräten */
+  }}
+
+  #framesSlider img {{
+    width: 100%;  /* Das Bild wird auf die volle Breite des Bildschirms skaliert */
+    height: auto; /* Proportionen bleiben erhalten */
+  }}
+}}
+
+
+
 
     </style>
 </head>
 <body>
-"+GetNav()+$@"
+" +GetNav()+$@"
+
+<div id=""framesModal"" class=""modal"" style=""display:none;"">
+  <div class=""modal-content"">
+    <h2 class=""close""><i class=""fa-regular fa-circle-xmark"" style='font-size:30px;'></i></h2>
+    <h2 id='modal-title'>-</h2>
+    <div id=""framesSlider"">
+      <button id=""prevFrame"">Back</button>
+      <img id=""frameImage"" src="""" />
+      <button id=""nextFrame"">Next</button>
+    </div>
+  </div>
+</div>
+
 
     <div class='container'>
         <h1>{camera.CameraName}</h1>
@@ -595,6 +727,111 @@ document.addEventListener('DOMContentLoaded', function() {{
     const image = document.querySelector('.video-container');
     const button = document.getElementById('fullscreen-btn');
     let isPlaying = false; // Controls whether recording is playing
+let frames = []; // Array, um die Frames zu speichern
+let currentFrameIndex = 0; // Aktueller Index des Frames
+
+function formatDateTime(input) {{
+  var p = input.split('/')[1].split('_');
+  var date = p[0].replaceAll('-','.');
+  var time = p[1].replaceAll('-',':');
+    return `${{date}} - ${{time}}<br>Motion Detected`;
+}}
+
+// Modal open/close logic
+window.showFrames = function(recordingPath) {{
+    const framesUrl = `../media/frames/${{recordingPath}}?t=${{Date.now()}}`;
+            // Zeige das Modal
+            const modal = document.getElementById('framesModal');
+            modal.style.display = ""block"";
+    document.getElementById('prevFrame').style.display = ""none"";
+    document.getElementById('nextFrame').style.display = ""none"";
+    document.querySelector('#modal-title').innerHTML='loading ...';
+document.getElementById('frameImage').src='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+    fetch(framesUrl)
+        .then(response => response.json())
+        .then(data => {{
+            frames = data; // Speichere die geladenen Frames im Array
+            currentFrameIndex = 0; // Setze den Frame-Index auf 0 (erster Frame)
+            updateFrame(); // Zeige den ersten Frame an
+
+            // Slider-Buttons anzeigen
+    document.querySelector('#modal-title').innerHTML=formatDateTime(recordingPath);
+            document.getElementById('prevFrame').style.display = ""inline-block"";
+            document.getElementById('nextFrame').style.display = ""inline-block"";
+
+
+        }})
+        .catch(error => console.error('Error fetching frames:', error));
+}}
+
+
+// Funktion zum Abspielen einer Aufnahme (GIF) ohne Slider
+window.playRecording = function(recordingPath) {{
+    const gifUrl = `../media/video/${{recordingPath}}?t=${{Date.now()}}`;
+            const modal = document.getElementById('framesModal');
+            modal.style.display = ""block"";
+
+    document.querySelector('#modal-title').innerHTML='loading ...';
+    // Slider-Buttons ausblenden
+
+    document.getElementById('prevFrame').style.display = ""none"";
+    document.getElementById('nextFrame').style.display = ""none"";
+document.getElementById('frameImage').src='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+    // Lade das GIF und setze es als Quelle für das Bild im Modal
+    fetch(gifUrl, {{ cache: 'no-cache' }})
+        .then(response => {{
+            if (!response.ok) {{
+                throw new Error('Error fetching GIF');
+            }}
+            return response.blob();
+        }})
+        .then(blob => {{
+            const objectURL = URL.createObjectURL(blob);
+    document.querySelector('#modal-title').innerHTML=formatDateTime(recordingPath);
+setImageSrcFromBlob(document.getElementById('frameImage'),blob);
+        }})
+        .catch(error => {{
+            console.error('Error fetching GIF:', error);
+        }});
+}};
+
+
+// Funktion zum Aktualisieren des angezeigten Frames
+function updateFrame() {{
+    if (frames.length > 0) {{
+        document.getElementById('frameImage').src = frames[currentFrameIndex]; // Setze den aktuellen Frame als Bildquelle
+    }}
+}}
+
+// Funktion, um zum nächsten Frame zu wechseln
+document.getElementById('nextFrame').onclick = function() {{
+    if (currentFrameIndex < frames.length - 1) {{
+        currentFrameIndex++; // Erhöhe den Index
+        updateFrame(); // Aktualisiere das Bild
+    }}
+}};
+
+// Funktion, um zum vorherigen Frame zu wechseln
+document.getElementById('prevFrame').onclick = function() {{
+    if (currentFrameIndex > 0) {{
+        currentFrameIndex--; // Verringere den Index
+        updateFrame(); // Aktualisiere das Bild
+    }}
+}};
+
+// Modal schließen, wenn man auf das X klickt
+document.querySelector("".close"").onclick = function() {{
+    document.getElementById('framesModal').style.display = ""none"";
+}};
+
+// Modal schließen, wenn man außerhalb klickt
+window.onclick = function(event) {{
+    const modal = document.getElementById('framesModal');
+    if (event.target == modal) {{
+        modal.style.display = ""none"";
+    }}
+}};
+
 
     // Fullscreen toggle handler
     button.addEventListener('click', () => {{
@@ -622,10 +859,10 @@ document.addEventListener('DOMContentLoaded', function() {{
                         console.error(""Empty blob for live feed"");
                         return;
                     }}
-                    const objectURL = URL.createObjectURL(blob);
-                    cameraImg.src = objectURL;
+                    
+                    setImageSrcFromBlob(cameraImg,blob);
 
-                    cameraImg.onload = () => URL.revokeObjectURL(objectURL);
+                   //cameraImg.onload = () => URL.revokeObjectURL(objectURL);
                 }})
                 .catch(error => console.error('Error fetching live camera image:', error));
         }}, 1000);
@@ -642,71 +879,6 @@ document.addEventListener('DOMContentLoaded', function() {{
 
     // Start live feed when the page is loaded
     startLiveFeed();
-
-    // Play specific recording by timestamp
-    window.playRecording = function(timestamp) {{
-  window.scrollTo({{
-                top: 0,
-                behavior: 'smooth'
-            }});
-
-        console.log(""Attempting to play recording for timestamp:"", timestamp);
-
-        // Stop live feed fetching
-        stopLiveFeed();
-
-        // Cancel any ongoing recording playback
-        if (abortController) {{
-            console.log(""Aborting previous fetch..."");
-            abortController.abort();
-        }}
-        if (timeoutId) clearTimeout(timeoutId);
-
-        // Set the isPlaying flag to true to prevent live feed fetches
-        isPlaying = true;
-
-        // Fetch and play the recording
-        const gifUrl = `../media/video/${{timestamp}}?t=${{Date.now()}}`;
-        abortController = new AbortController();
-
-        fetch(gifUrl, {{ cache: 'no-cache', signal: abortController.signal }})
-            .then(response => {{
-                if (!response.ok) throw new Error('GIF fetch error');
-                return response.blob();
-            }})
-            .then(blob => {{
-                console.log('Fetched recording blob, size:', blob.size);
-                if (blob.size === 0) {{
-                    throw new Error('Empty blob received');
-                }}
-
-
-
-                cameraImg.onload = () => URL.revokeObjectURL(objectURL);
-setTimeout(() => {{
-                const [date, time] = timestamp.replaceAll('_', ' ').replace(`{camera.CameraIndex}/`, '').split(' ');
-                document.querySelector('h2').textContent = `${{date.replaceAll('-', '.')}} - ${{time.replaceAll('-', ':')}} - Motion Detection`;
-
-setImageSrcFromBlob(cameraImg, blob);
-                // Reset to live feed after 10 seconds
-                timeoutId = setTimeout(() => {{
-                    console.log(""Resetting to live feed..."");
-                    isPlaying = false;
-                    document.querySelector('h2').textContent = 'Live Feed';
-
-                    // Restart the live feed fetching
-                    startLiveFeed();
-                }}, {Motion.recording_time/2*1000});
-                }}, 1000);
-
-
-            }})
-            .catch(error => {{
-                console.error('Error fetching recording:', error);
-                isPlaying = false; // Reset playing state on error
-                startLiveFeed(); // Restart live feed in case of error
-            }});
-    }};
 
 function setImageSrcFromBlob(imgElement, blob) {{
   const reader = new FileReader();

@@ -70,8 +70,9 @@ public class CustomTextWriter : TextWriter
            var currentColor = Console.ForegroundColor;
             string colorHex = ColorConverter.ToHex(currentColor);
         if (m.Contains(":"))
-            _eventLog.Add(new ConsoleEvent(m, colorHex));
-
+        {
+            _eventLog.Add(new ConsoleEvent(m.Replace("- ", $"- {DateTime.Now.ToShortDateString()} - "), colorHex));
+        }
             // Schreibe die Nachricht in die Konsole
             _originalOut.WriteLine($"{message}");
         

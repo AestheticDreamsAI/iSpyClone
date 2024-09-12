@@ -1,4 +1,5 @@
 ﻿using ImageMagick;
+using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -27,7 +28,10 @@ using System.Threading.Tasks;
         {
 
         }
-        return camera.ImageToByteArray(Image.FromFile(".\\nosignal.gif"));
+        using (var img = Image.FromFile(".\\nosignal.gif"))
+        {
+            return camera.ImageToByteArray(img);
+        }
     }
 
     public static async Task<byte[]> GetRecording(string path)
@@ -41,7 +45,42 @@ using System.Threading.Tasks;
         {
             //Console.WriteLine(ex.Message);
         }
-        return camera.ImageToByteArray(Image.FromFile(".\\nosignal.gif"));
+        using (var img = Image.FromFile(".\\nosignal.gif"))
+        {
+            return camera.ImageToByteArray(img);
+        }
+    }
+
+    public static List<string> ExtractGifFramesAsBase64(string filePath)
+    {
+                var camera = new Camera();
+        List<string> framesBase64 = new List<string>();
+
+        using (Image gifImage = Image.FromFile(camera.GetRecordingFrames(filePath)))
+        {
+            int frameCount = gifImage.GetFrameCount(FrameDimension.Time);
+
+            for (int i = 0; i < frameCount; i++)
+            {
+                gifImage.SelectActiveFrame(FrameDimension.Time, i);
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    gifImage.Save(ms, ImageFormat.Png);
+                    byte[] byteImage = ms.ToArray();
+                    string base64String = Convert.ToBase64String(byteImage);
+                    framesBase64.Add($"data:image/png;base64,{base64String}");
+                }
+            }
+        }
+
+        return framesBase64;
+    }
+
+    public static async Task<List<string>> GetFramesForRecording(string recordingPath)
+    {
+        List<string> frameBase64List = ExtractGifFramesAsBase64(recordingPath);
+        return frameBase64List;
     }
 
     public static Bitmap ResizeImage(Image image, int width, int height)
@@ -60,6 +99,70 @@ using System.Threading.Tasks;
         graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, imageAttributes);
         return bitmap;
     }
+
+
+    public static async Task<byte[]> ConvertGifToVideo(string gifPath)
+    {
+        using (Image gifImage = Image.FromFile(gifPath))
+        {
+            FrameDimension dimension = new FrameDimension(gifImage.FrameDimensionsList[0]);
+            int frameCount = gifImage.GetFrameCount(dimension);
+
+            // Temporären Speicher-Stream für das Video nutzen
+            using (MemoryStream memoryStream = new MemoryStream())
+            {
+                // Temporären Pfad für die Videodatei (kann erforderlich sein, da OpenCvSharp nicht direkt mit Streams arbeitet)
+                string tempFilePath = Path.GetTempFileName() + ".avi";
+
+                // VideoWriter initialisieren
+                VideoWriter writer = new VideoWriter(tempFilePath, FourCC.XVID, 1, new OpenCvSharp.Size(gifImage.Width, gifImage.Height));
+
+                // Alle Frames des GIF durchlaufen und in das Video schreiben
+                for (int i = 0; i < frameCount; i++)
+                {
+                    gifImage.SelectActiveFrame(dimension, i);
+                    using (Bitmap bmp = new Bitmap(gifImage))
+                    {
+                        Mat mat = BitmapToMat(bmp);
+                        writer.Write(mat);
+                        mat.Dispose();
+                    }
+                }
+
+                // VideoWriter schließen
+                writer.Release();
+
+                // Temporäre Videodatei in MemoryStream laden
+                using (FileStream fileStream = new FileStream(tempFilePath, FileMode.Open, FileAccess.Read))
+                {
+                    fileStream.CopyTo(memoryStream);
+                }
+
+                // Temporäre Datei löschen
+                File.Delete(tempFilePath);
+
+                // Byte-Array zurückgeben
+                return memoryStream.ToArray();
+            }
+        }
+    }
+
+
+    // Helper-Methode zum Konvertieren einer Bitmap zu OpenCvSharp-Mat
+    private static Mat BitmapToMat(Bitmap bmp)
+    {
+        var mat = new Mat(bmp.Height, bmp.Width, MatType.CV_8UC3);
+        for (int y = 0; y < bmp.Height; y++)
+        {
+            for (int x = 0; x < bmp.Width; x++)
+            {
+                System.Drawing.Color color = bmp.GetPixel(x, y);
+                mat.Set(y, x, new Vec3b(color.B, color.G, color.R));
+            }
+        }
+        return mat;
+    }
+
     private static async Task CreateGif(string cameraIndex, string timestamp, List<string> imageFiles)
     {
         string gifFolderPath = Path.Combine(Program.manager.getDirectory(), "video", cameraIndex, timestamp);
@@ -77,7 +180,7 @@ using System.Threading.Tasks;
                         image.AnimationDelay = 50; // Frame-Delay setzen (anpassbar)
 
                         // Reduziere die Bildgröße (optional, um die Dateigröße zu reduzieren)
-                        image.Resize(300, 0); // z.B. auf 300px Breite skalieren, Höhe proportional
+                        image.Resize(500, 0); // z.B. auf 300px Breite skalieren, Höhe proportional
 
                         // Reduziere die Farbanzahl (z.B. auf 128 Farben, um die Dateigröße zu minimieren)
                         image.Quantize(new QuantizeSettings
@@ -97,6 +200,8 @@ using System.Threading.Tasks;
             collection.Write(gifFilePath);
         }
     }
+
+
 
 
     public static async Task SaveSnapshots(Camera cam, int v)
@@ -126,7 +231,7 @@ using System.Threading.Tasks;
 
                 imageFiles.Add(fileName); // Add file path to the list
                 imageCount++;
-                await Task.Delay(Motion.Interval* 1000); // Pause for 500ms (adjust the delay as needed)
+                await Task.Delay(Motion.Interval * 1000); // Pause for 500ms (adjust the delay as needed)
             }
         }
         await CreateGif(cam.CameraIndex.ToString(), timestamp, imageFiles);

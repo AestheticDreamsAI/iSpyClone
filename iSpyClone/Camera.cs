@@ -51,6 +51,20 @@ public class Camera
         }
     }
 
+    public string GetRecordingFrames(string path)
+    {
+        // Replace the path as per the original logic
+        string filePath = path + "\\animated.gif";
+
+        // Check if the file is corrupt before proceeding
+        if (DataChecker.IsFileCorrupt(filePath))
+        {
+            return null; // Return null or handle accordingly when file is corrupt
+        }
+
+            return filePath;
+    }
+
 
     public long CalculateTotalFrameSize()
     {
@@ -162,7 +176,10 @@ public class Camera
         // Fallback to GIF
         try
         {
-            return (Image.FromFile(".\\nosignal.gif"),false); // This will load the entire GIF including animation
+            using (var img = Image.FromFile(".\\nosignal.gif"))
+            {
+                return (img, false); // This will load the entire GIF including animation
+            }
         }
         catch (Exception ex)
         {

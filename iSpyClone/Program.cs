@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ using Console = System.Console;
 class Program
 {
     private static string Name = "iSpyClone";
-    private static string Version = "Preview 3";
+    private static string Version = "Preview 4";
     public static DataManager manager;
     public static CustomTextWriter logWriter;
     static async Task Main(string[] args)
@@ -37,7 +38,6 @@ class Program
         var server = new HttpServer(prefixes);
 
         Cameras.Load();
-
 
         using (CancellationTokenSource cts = new CancellationTokenSource())
         {
