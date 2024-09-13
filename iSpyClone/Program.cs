@@ -27,7 +27,11 @@ class Program
         config = new Config();
         if (!File.Exists(".\\config.json"))
             config.Save();
-        else config = Config.Load();
+        else
+        {
+            config = Config.Load();
+            config.Save();
+        }
         Header(Name, Version);
         //config.SavingDir = "h:\\media";
         string directoryPath = config.SavingDir;
