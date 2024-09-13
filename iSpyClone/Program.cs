@@ -14,7 +14,7 @@ using Console = System.Console;
 class Program
 {
     private static string Name = "iSpyClone";
-    private static string Version = "Preview 4";
+    private static string Version = "Preview 5";
     public static DataManager manager;
     public static CustomTextWriter logWriter;
     public static Config config;
