@@ -14,51 +14,83 @@ internal class Dashboard
 {
     static string GetNav()
     {
-        return @"
-<div class=""navbar"">
-    <a id=""menu-icon"" class=""menu-icon"" onclick=""toggleMenu()"" style='font-size:30px;'>☰</a>
-    <div id=""menu-items"" class=""menu-items"">
-        <a href=""../"">Home</a>
-        <a href=""../logs"">Logs</a>
-        <a href=""../stats"">Statistics</a>
-        <a href=""../add"" class=""addCam"">Add Camera</a>
+        Dictionary<string,string> menuItems = new Dictionary<string,string>();
+        menuItems.Add("Home", "../");
+        menuItems.Add("Logs", "../logs");
+        menuItems.Add("Statistics", "../stats");
+        var items = "";
+        foreach (var item in menuItems)
+        {
+            items += $"<a href=\"{item.Value}\">{item.Key}</a>";
+        }
+        items += $"<a href=\"../add\" class=\"addCam\">Add Camera</a>";
+        return $@"
+<div class='navbar'>
+    <a id=""menu-icon"" class='menu-icon' onclick='toggleMenu()' style='font-size:30px;'>☰</a>
+    <div id='menu-items' class='menu-items'>
+{items}
     </div>
 </div>
 
 <script>
-    function toggleMenu() {
-        var menuIcon = document.getElementById(""menu-icon"");
-        var menu = document.getElementById(""menu-items"");
-        if (menu.style.display === ""none"" || menu.style.display === """") {
-            menu.style.display = ""flex"";
+var def = null;
+    function toggleMenu() {{
+        var menuIcon = document.getElementById('menu-icon');
+        var menu = document.getElementById('menu-items');
+        const items = menu.children;
+        if (menu.style.display === 'none' || menu.style.display === '') {{
+            menu.style.display = 'block';
+            menu.style.width='100%';
             menuIcon.style.display='none';
-        } else {
-            menu.style.display = ""none"";
-        }
-    }
-document.addEventListener(""DOMContentLoaded"", function() {
+for (let i = 0; i < items.length; i++) {{
+    items[i].style.display = 'block'; 
+    items[i].style.width = '100%'; 
 
-    function checkWindowSize() {
-        var menuIcon = document.getElementById(""menu-icon"");
-        var menuItems = document.getElementById(""menu-items"");
+}}
+        }} else {{
+            menu.style.width='auto';
+            menu.style.display = 'none';
+            menuIcon.style.display='block';
+for (let i = 0; i < items.length; i++) {{
+    items[i].style=def;
 
-        if (window.innerWidth > 700) {
+}}
+        }}
+    }}
+document.addEventListener('DOMContentLoaded', function() {{
+
+    function checkWindowSize()
+        {{ 
+        var menuIcon = document.getElementById('menu-icon');
+        var menuItems = document.getElementById('menu-items');
+        const items = menuItems.children;
+        if(def===null)
+        {{
+            def = items[0].style;
+        }}
+        if (window.innerWidth > 700) {{
             // Show full menu, hide hamburger icon
-            menuIcon.style.display = ""none"";
-            menuItems.style.display = ""flex"";
-        } else {
+            menuIcon.style.display = 'none';
+            menuItems.style.display = 'flex';
+            menuItems.style.textAlign='right';
+            menuItems.style.width='auto';
+for (let i = 0; i < items.length; i++) {{
+    items[i].style=def;
+}}
+
+        }} else {{
             // Show hamburger icon, hide full menu
-            menuIcon.style.display = ""block"";
-            menuItems.style.display = ""none"";  // Hide the menu until the icon is clicked
-        }
-    }
+            menuIcon.style.display = 'block';
+            menuItems.style.display = 'none'; 
+        }}
+    }}
 
     // Check window size on load
     checkWindowSize();
 
     // Check window size on resize
     window.onresize = checkWindowSize;
-});
+}});
 </script>
 
 ";
@@ -275,12 +307,14 @@ document.addEventListener(""DOMContentLoaded"", function() {
 * {
     scrollbar-width: thin; /* Thin scrollbar */
     scrollbar-color: #444 #222; /* Thumb color and track color */
+ box-sizing:border-box;           
+
 }
 
     </style>
 </head>
 <body>
-"+GetNav()+@"
+" + GetNav()+@"
 
         <h1>" + Console.Title+@"</h1>
     <div class=""container"">
@@ -667,10 +701,19 @@ margin-right:20px;
     height: auto; /* Proportionen bleiben erhalten */
   }}
 }}
+input{{
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-size:16px;
+}}
 
-
-
-
+*{{
+ box-sizing:border-box;           
+}}
     </style>
 </head>
 <body>
@@ -713,6 +756,7 @@ margin-right:20px;
 
         <div class='recordings'>
             <h2>Recordings</h2>
+            <div><input type='text' oninput='Search(this)' placeholder='Search all recordings ...'></div>
             <ul class='recording-list'>
  {_recordings_}
             </ul>
@@ -721,6 +765,7 @@ margin-right:20px;
 
 
 <script>
+    let recordingsArray = [];
 document.addEventListener('DOMContentLoaded', function() {{
     let abortController = null;
     let timeoutId = null;
@@ -731,6 +776,36 @@ document.addEventListener('DOMContentLoaded', function() {{
     let isPlaying = false; // Controls whether recording is playing
 let frames = []; // Array, um die Frames zu speichern
 let currentFrameIndex = 0; // Aktueller Index des Frames
+
+      const recordings = document.querySelectorAll('.recording-item');
+        recordings.forEach(function (recording) {{
+            recordingsArray.push({{
+                html: recording.outerHTML, // Speichere das HTML des Listenelements
+                text: recording.innerText.toLowerCase() // Text für die Suche speichern
+            }});
+        }});
+
+    window.Search = function(input) {{
+        const searchTerm = input.value.toLowerCase();
+        const filteredRecordings = recordingsArray.filter(function (recording) {{
+            return recording.text.includes(searchTerm);
+        }});
+        // UI neu rendern basierend auf dem Filter
+        const recordingList = document.querySelector('.recording-list');
+        if (searchTerm === '') {{
+            recordingList.innerHTML = '';
+            recordingsArray.forEach(function (recording) {{
+                recordingList.innerHTML += recording.html;
+            }});
+            return;
+        }}
+        recordingList.innerHTML = ''; // Bestehende Elemente leeren
+
+        // Neue, gefilterte Listenelemente einsetzen
+        filteredRecordings.forEach(function (recording) {{
+            recordingList.innerHTML += recording.html;
+        }});
+    }}
 
 function formatDateTime(input) {{
   var p = input.split('/')[1].split('_');
@@ -1000,6 +1075,7 @@ function setImageSrcFromBlob(imgElement, blob) {{
             border-radius: 4px;
             background-color: var(--input-bg);
             color: var(--text-color);
+font-size:16px;
         }
 
         .btn {
@@ -1106,11 +1182,13 @@ function setImageSrcFromBlob(imgElement, blob) {{
     scrollbar-color: #444 #222; /* Thumb color and track color */
 }
 
-
+*{
+ box-sizing:border-box;           
+}
     </style>
 </head>
 <body>
-"+GetNav()+$@"
+" + GetNav()+$@"
 
     <div class=""container"">
         <h1>Edit Camera</h1>
@@ -1265,6 +1343,7 @@ updatePreview();
             border-radius: 4px;
             background-color: var(--input-bg);
             color: var(--text-color);
+            font-size:16px;
         }
 
         .btn {
@@ -1366,11 +1445,18 @@ updatePreview();
     scrollbar-color: #444 #222; /* Thumb color and track color */
 }}
 
-
+*{
+ box-sizing:border-box;           
+}
+        .navbar .addCam{
+                    background-color: var(--primary-color);
+            color: white;
+            border-radius:20px;
+        }
     </style>
 </head>
 <body>
-"+GetNav()+@"
+" + GetNav()+@"
 
     <div class=""container"">
         <h1>Add Camera</h1>
@@ -1610,6 +1696,9 @@ updatePreview();
             scrollbar-width: thin; /* Thin scrollbar */
             scrollbar-color: #444 #222; /* Thumb color and track color */
         }}
+*{{
+ box-sizing:border-box;           
+}}
     </style>
 </head>
 <body>
@@ -1729,6 +1818,9 @@ updatePreview();
             scrollbar-width: thin; /* Thin scrollbar */
             scrollbar-color: #444 #222; /* Thumb color and track color */
         }}
+*{{
+ box-sizing:border-box;           
+}}
     </style>
 </head>
 <body>
