@@ -145,6 +145,7 @@ public class Camera
                 // Handle exception if needed
             }
         }
+        recordings.Reverse();
         return recordings;
     }
 

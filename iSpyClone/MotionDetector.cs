@@ -12,6 +12,7 @@ public class Motion
     public static int Interval = 1;
     public static int recording_time = 60;
     public static int timeout = recording_time+30;
+    public static int totalFrames = 30;
     public static async Task isDetected(Camera camera)
     {
         if (camera.MotionDetector == null)
@@ -35,6 +36,9 @@ public class Motion
 
     public static async Task StartDetection(CancellationToken cts, int inter)
     {
+        recording_time = Program.config.RecordingTime;
+        totalFrames = recording_time * Program.config.FPS;
+        timeout = totalFrames + 60;
         Interval = inter;
         Console.WriteLine("- Motion Detection started...");
 
@@ -83,11 +87,11 @@ public class Motion
         CameraStatistics.MotionDetected(cam);
         RecordingMonitor.UpdateLastRecordingTime(cam);
         cam.IsRecording = true;
-
+       
         try
         {
             // Set a timeout to stop recording after a certain period (e.g. 60 seconds)
-            var recordingTask = ImageProcessing.SaveSnapshots(cam, recording_time); // Nehme 30 Bilder auf
+            var recordingTask = ImageProcessing.SaveSnapshots(cam, totalFrames); // Nehme 30 Bilder auf
             var timeoutTask = Task.Delay(TimeSpan.FromSeconds(timeout)); // Maximal 60 Sekunden Aufnahme
 
             // Warte, bis die Aufnahme abgeschlossen oder der Timeout erreicht ist

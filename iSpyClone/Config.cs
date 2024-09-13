@@ -8,6 +8,8 @@ public class Config
     public int MaxCamFails { get; set; } = 3;
     public int Quality { get; set; } = 255;
     public int MaxMemoryUsage { get; set; } = 500;
+    public int FPS { get; set; } = 2;
+    public int RecordingTime { get; set; } = 60;
 
 
     // Method to load configuration from a file

@@ -115,7 +115,7 @@ using System.Threading.Tasks;
                 string tempFilePath = Path.GetTempFileName() + ".avi";
 
                 // VideoWriter initialisieren
-                VideoWriter writer = new VideoWriter(tempFilePath, FourCC.XVID, 1, new OpenCvSharp.Size(gifImage.Width, gifImage.Height));
+                VideoWriter writer = new VideoWriter(tempFilePath, FourCC.XVID, Program.config.FPS, new OpenCvSharp.Size(gifImage.Width, gifImage.Height));
 
                 // Alle Frames des GIF durchlaufen und in das Video schreiben
                 for (int i = 0; i < frameCount; i++)
@@ -165,9 +165,12 @@ using System.Threading.Tasks;
 
     private static async Task CreateGif(string cameraIndex, string timestamp, List<string> imageFiles)
     {
-        string gifFolderPath = Path.Combine(Program.manager.getDirectory(), "video", cameraIndex, timestamp);
-        Directory.CreateDirectory(gifFolderPath); // Sicherstellen, dass das Verzeichnis existiert
 
+        string gifFolderPath = Path.Combine(Program.manager.getDirectory(), "video", cameraIndex, timestamp);
+        if (!Directory.Exists(gifFolderPath))
+        {
+            Directory.CreateDirectory(gifFolderPath); // Ensure the directory exists
+        }
         string gifFilePath = Path.Combine(gifFolderPath, "animated.gif");
 
         using (var collection = new MagickImageCollection())
@@ -195,7 +198,12 @@ using System.Threading.Tasks;
 
             // GIF optimieren (entfernt redundante Frames, reduziert die Größe weiter)
             collection.Optimize();
-
+            gifFolderPath = Path.Combine(Program.manager.getDirectory(), "video", cameraIndex, timestamp);
+            if (!Directory.Exists(gifFolderPath))
+            {
+                Directory.CreateDirectory(gifFolderPath); // Ensure the directory exists
+            }
+            gifFilePath = Path.Combine(gifFolderPath, "animated.gif");
             // GIF an den gewünschten Ort speichern
             collection.Write(gifFilePath);
         }
@@ -204,7 +212,7 @@ using System.Threading.Tasks;
 
 
 
-    public static async Task SaveSnapshots(Camera cam, int v)
+    public static async Task SaveSnapshots(Camera cam, int totalframes)
     {
         int imageCount = 0;
         var d = DateTime.Now;
@@ -214,12 +222,19 @@ using System.Threading.Tasks;
 
         // Create the path as media/images/{cam.CameraIndex}/{timestamp}
         string folderPath = Path.Combine(Program.manager.getDirectory(), "images", cam.CameraIndex.ToString(), timestamp);
-        Directory.CreateDirectory(folderPath); // Ensure the directory exists
-
+        if (!Directory.Exists(folderPath))
+        {
+            Directory.CreateDirectory(folderPath); // Ensure the directory exists
+        }
         List<string> imageFiles = new List<string>(); // To store captured image paths
 
-        while (imageCount < v)
+        while (imageCount < totalframes)
         {
+            folderPath = Path.Combine(Program.manager.getDirectory(), "images", cam.CameraIndex.ToString(), timestamp);
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath); // Ensure the directory exists
+            }
             var snap = await cam.getSnapshot(); // Capture image from the camera
             var img = snap.Item1;
             if (snap.Item2)
