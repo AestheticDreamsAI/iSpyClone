@@ -19,7 +19,7 @@ internal class Dashboard
         menuItems.Add("Logs", "../logs");
         menuItems.Add("Statistics", "../stats");
         var items = "";
-        items += $"<a href=\"../add\" onclick='toggleMenu()' style='font-size:30px;display:none;'>☰</a>";
+        items += $"<a href=\"#\" onclick='toggleMenu()' style='font-size:30px;display:none;text-align:right;'>☰</a>";
         foreach (var item in menuItems)
         {
             items += $"<a href=\"{item.Value}\">{item.Key}</a>";
