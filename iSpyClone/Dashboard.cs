@@ -14,7 +14,7 @@ internal class Dashboard
 {
     static string GetNav()
     {
-        Dictionary<string,string> menuItems = new Dictionary<string,string>();
+        Dictionary<string, string> menuItems = new Dictionary<string, string>();
         menuItems.Add("Home", "../");
         menuItems.Add("Logs", "../logs");
         menuItems.Add("Statistics", "../stats");
