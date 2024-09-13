@@ -19,6 +19,7 @@ internal class Dashboard
         menuItems.Add("Logs", "../logs");
         menuItems.Add("Statistics", "../stats");
         var items = "";
+        items += $"<a href=\"../add\" onclick='toggleMenu()' style='font-size:30px;display:none;'>☰</a>";
         foreach (var item in menuItems)
         {
             items += $"<a href=\"{item.Value}\">{item.Key}</a>";
@@ -52,8 +53,11 @@ for (let i = 0; i < items.length; i++) {{
             menu.style.display = 'none';
             menuIcon.style.display='block';
 for (let i = 0; i < items.length; i++) {{
+if(i!==0){{
     items[i].style=def;
-
+}}else{{
+items[0].style.display='none';        
+}}
 }}
         }}
     }}
@@ -64,9 +68,10 @@ document.addEventListener('DOMContentLoaded', function() {{
         var menuIcon = document.getElementById('menu-icon');
         var menuItems = document.getElementById('menu-items');
         const items = menuItems.children;
+        items[0].style.display='none';    
         if(def===null)
         {{
-            def = items[0].style;
+            def = items[1].style;
         }}
         if (window.innerWidth > 700) {{
             // Show full menu, hide hamburger icon
@@ -75,7 +80,11 @@ document.addEventListener('DOMContentLoaded', function() {{
             menuItems.style.textAlign='right';
             menuItems.style.width='auto';
 for (let i = 0; i < items.length; i++) {{
+if(i!==0){{
     items[i].style=def;
+}}else{{
+items[0].style.display='none';        
+}}
 }}
 
         }} else {{
