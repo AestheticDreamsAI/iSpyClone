@@ -2,7 +2,7 @@
 {
     // Dictionary zum Speichern der letzten Aufnahmezeit für jede Kamera
     private static Dictionary<string, DateTime> lastRecordingTimes = new Dictionary<string, DateTime>();
-
+    private static DateTime noRecordingsSinceStart;
     // Zeitspanne in Sekunden, nach der geprüft wird, ob keine Aufnahme stattgefunden hat
     public static int CheckIntervalInSeconds = 60;
     public static int MaxIdleTimeInSeconds = 300; // 5 Minuten Leerlaufzeit
@@ -26,6 +26,14 @@
     {
         Console.ForegroundColor = ConsoleColor.Red;
         int inactiveCamerasCount = 0;
+        if (lastRecordingTimes.Count == 0)
+        {
+            if (noRecordingsSinceStart != null && (DateTime.Now - noRecordingsSinceStart).TotalMinutes >= 10)
+            {
+                Console.WriteLine($"- {DateTime.Now.ToLongTimeString()}: All Cameras - No recording for 10 minutes.");
+                return true;
+            }
+        }
 
         foreach (var cam in Cameras.All())
         {
@@ -61,6 +69,7 @@
     {
         MaxInactiveCameras = MaxCamFails;
         Console.WriteLine("- Recording Monitor started...");
+        noRecordingsSinceStart = DateTime.Now;
         while (!cts.Token.IsCancellationRequested)
         {
             if (CheckIdleCameras())
