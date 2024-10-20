@@ -31,7 +31,7 @@ public class HttpServer
             try 
             {
                 var context = await _listener.GetContextAsync();
-                _ = Task.Run(() => HandleRequestAsync(context));
+                _ = Task.Run(() => HandleRequestAsync(context),cts);
             }
             catch { }
         }

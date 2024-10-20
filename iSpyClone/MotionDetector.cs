@@ -56,7 +56,7 @@ public class Motion
             await Task.WhenAll(detectionTasks);
 
             // Kurze Pause, bevor erneut geprüft wird
-            await Task.Delay(Interval * 1000); // Verwende den festgelegten Intervall
+            await Task.Delay(Interval * 1000,cts); // Verwende den festgelegten Intervall
         }
         Console.WriteLine("- Motion Detection stopped...");
     }

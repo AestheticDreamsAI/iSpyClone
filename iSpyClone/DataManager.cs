@@ -4,6 +4,7 @@
     private readonly string _fallbackDirectoryPath = @".\media";
     private readonly long _maxSizeInBytes;
     private readonly int _checkIntervalInMinutes;
+    private readonly SemaphoreSlim _syncSemaphore = new SemaphoreSlim(1, 1); // Maximal 1 gleichzeitiger Zugriff
 
     public DataManager(string directoryPath, int checkIntervalInMinutes = 5, long maxSizeInBytes = 2) // 50 GB in Bytes
     {
@@ -21,8 +22,6 @@
         return _maxSizeInBytes;
     }
 
-
-
     // Methode, um sicherzustellen, dass das Verzeichnis existiert
     private void EnsureDirectoryExists(string path)
     {
@@ -35,7 +34,6 @@
     // Methode zum Abrufen des Verzeichnisses (entweder Primär oder Fallback)
     public string getDirectory()
     {
-        // Überprüfen, ob das Primärverzeichnis auf einem bestimmten Laufwerk (z.B. F:) liegt
         Console.ForegroundColor = ConsoleColor.DarkCyan;
         if (_primaryDirectoryPath == _fallbackDirectoryPath)
             return _primaryDirectoryPath;
@@ -52,56 +50,174 @@
                 return _fallbackDirectoryPath;
             }
         }
-
     }
 
     // Methode zur Überprüfung, ob das Primärverzeichnis auf einem Laufwerk liegt und ob es verfügbar ist
     private bool IsPrimaryDirectoryAvailable()
     {
-        // Prüfen, ob der Pfad mit einem Laufwerksbuchstaben endet (z.B. "F:\" oder "C:\")
         if (_primaryDirectoryPath.Length >= 2 && _primaryDirectoryPath[1] == ':')
         {
-            string driveLetter = _primaryDirectoryPath.Substring(0, 2); // z.B. "F:"
-
-            // Prüfen, ob das Laufwerk verfügbar ist
+            string driveLetter = _primaryDirectoryPath.Substring(0, 2);
             return DriveInfo.GetDrives().Any(drive => drive.Name.Equals(driveLetter + "\\", StringComparison.OrdinalIgnoreCase));
         }
 
-        return false; // Kein gültiger Laufwerkspfad
+        return false;
     }
 
     // Synchronisierungsmethode, wenn das Primärverzeichnis wieder verfügbar ist
     public async Task SyncFilesWhenPrimaryAvailableAsync()
     {
-        Console.ForegroundColor = ConsoleColor.DarkCyan;
-        if (_primaryDirectoryPath != _fallbackDirectoryPath && Directory.GetDirectories(_fallbackDirectoryPath).Length>0)
+        // Versuche, das Semaphore zu betreten
+        if (await _syncSemaphore.WaitAsync(0)) // 0 bedeutet sofortige Rückgabe ohne Wartezeit
         {
-            if (IsPrimaryDirectoryAvailable())
+            try
             {
-                Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Primary directory available again. Synchronizing files...");
-
-                // Dateien vom Fallback-Verzeichnis in das Primärverzeichnis verschieben
-                foreach (string file in Directory.GetFiles(_fallbackDirectoryPath))
+                Console.ForegroundColor = ConsoleColor.DarkCyan;
+                if (_primaryDirectoryPath != _fallbackDirectoryPath && Directory.GetDirectories(_fallbackDirectoryPath).Length > 0)
                 {
-                    string destFile = Path.Combine(_primaryDirectoryPath, Path.GetFileName(file));
-                    File.Move(file, destFile);
-                }
+                    if (IsPrimaryDirectoryAvailable())
+                    {
+                        Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Primary directory available again. Synchronizing files...");
 
-                // Verzeichnisse vom Fallback-Verzeichnis in das Primärverzeichnis verschieben
-                foreach (string dir in Directory.GetDirectories(_fallbackDirectoryPath))
-                {
-                    string destDir = Path.Combine(_primaryDirectoryPath, Path.GetFileName(dir));
-                    Directory.Move(dir, destDir);
-                }
+                        // Dateien kopieren
+                        foreach (string file in Directory.GetFiles(_fallbackDirectoryPath))
+                        {
+                            string destFile = Path.Combine(_primaryDirectoryPath, Path.GetFileName(file));
 
-                Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Files successfully synchronized.");
+                            try
+                            {
+                                // Falls die Datei bereits existiert, wird sie überschrieben
+                                if (File.Exists(destFile))
+                                {
+                                    File.Delete(destFile);
+                                }
+
+                                File.Copy(file, destFile);
+                                Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Copied file {file} to {destFile}");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Error copying file {file}: {ex.Message}");
+                            }
+                        }
+
+                        // Verzeichnisse kopieren
+                        foreach (string dir in Directory.GetDirectories(_fallbackDirectoryPath))
+                        {
+                            string destDir = Path.Combine(_primaryDirectoryPath, Path.GetFileName(dir));
+
+                            try
+                            {
+                                // Falls das Verzeichnis bereits existiert, wird es gelöscht
+                                if (Directory.Exists(destDir))
+                                {
+                                    Directory.Delete(destDir, true); // true, um rekursiv zu löschen
+                                }
+
+                                DirectoryCopy(dir, destDir, true);
+                                Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Copied directory {dir} to {destDir}");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Error copying directory {dir}: {ex.Message}");
+                            }
+                        }
+
+                        Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Files and directories successfully synchronized.");
+
+                        // Fallback-Verzeichnis leeren
+                        await ClearFallbackDirectoryAsync();
+                    }
+                    else
+                    {
+                        Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Primary directory not available yet. Continuing to wait...");
+                    }
+                }
+                Console.ForegroundColor = ConsoleColor.White;
             }
-            else
+            finally
             {
-                Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Primary directory not available yet. Continuing to wait...");
+                // Gib das Semaphore frei
+                _syncSemaphore.Release();
             }
         }
-        Console.ForegroundColor = ConsoleColor.White;
+        else
+        {
+            // Wenn bereits eine Synchronisation läuft, gib eine Meldung aus
+            Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Sync already in progress. Skipping this run.");
+        }
+    }
+
+    // Methode zum rekursiven Kopieren von Verzeichnissen
+    private static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
+    {
+        DirectoryInfo dir = new DirectoryInfo(sourceDirName);
+        DirectoryInfo[] dirs = dir.GetDirectories();
+
+        if (!dir.Exists)
+        {
+            throw new DirectoryNotFoundException($"Source directory does not exist or could not be found: {sourceDirName}");
+        }
+
+        Directory.CreateDirectory(destDirName);
+
+        FileInfo[] files = dir.GetFiles();
+        foreach (FileInfo file in files)
+        {
+            string tempPath = Path.Combine(destDirName, file.Name);
+            file.CopyTo(tempPath, true);
+        }
+
+        if (copySubDirs)
+        {
+            foreach (DirectoryInfo subdir in dirs)
+            {
+                string tempPath = Path.Combine(destDirName, subdir.Name);
+                DirectoryCopy(subdir.FullName, tempPath, copySubDirs);
+            }
+        }
+    }
+
+    // Methode zum Leeren des Fallback-Verzeichnisses
+    private async Task ClearFallbackDirectoryAsync()
+    {
+        Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Clearing fallback directory...");
+        var tasks = new List<Task>();
+
+        foreach (string file in Directory.GetFiles(_fallbackDirectoryPath))
+        {
+            tasks.Add(Task.Run(() =>
+            {
+                try
+                {
+                    File.Delete(file);
+                    Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Deleted file {file}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Error deleting file {file}: {ex.Message}");
+                }
+            }));
+        }
+
+        foreach (string dir in Directory.GetDirectories(_fallbackDirectoryPath))
+        {
+            tasks.Add(Task.Run(() =>
+            {
+                try
+                {
+                    Directory.Delete(dir, true); // true, um Unterverzeichnisse rekursiv zu löschen
+                    Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Deleted directory {dir}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Error deleting directory {dir}: {ex.Message}");
+                }
+            }));
+        }
+
+        await Task.WhenAll(tasks); // Warten, bis alle Löschvorgänge abgeschlossen sind
+        Console.WriteLine($"- {DateTime.Now.ToLongTimeString()} Fallback directory cleared.");
     }
 
     public async Task StartMonitoring(CancellationToken cancellationToken)
@@ -165,7 +281,6 @@
         {
             foreach (Camera camera in cameras)
             {
-                //totalSize += camera.CalculateTotalFrameSize();
                 foreach (Recording rec in camera.GetRecordings())
                 {
                     totalSize += rec.Size; // Annahme: Die Aufnahme hat eine `Size`-Eigenschaft
