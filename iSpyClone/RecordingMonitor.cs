@@ -5,7 +5,7 @@
     public static int CheckIntervalInSeconds = 60;
     public static int MaxIdleTimeInSeconds = 300; // 5 Minuten Leerlaufzeit
     public static int MaxInactiveCameras = 2; // Anzahl der inaktiven Kameras, die das Programm beenden soll
-    public static int MaxNoRecordingTimeInMinutes = 10; // 30 Minuten ohne Aufnahme
+    public static int MaxNoRecordingTimeInMinutes = 120; // 30 Minuten ohne Aufnahme
 
     public static void UpdateLastRecordingTime(Camera cam)
     {
