@@ -1,9 +1,50 @@
 ﻿using System;
 using System.IO;
+using System.Security;
 
 public class DataChecker
 {
+    public static bool IsDirectoryAccessible(string path)
+    {
+        try
+        {
+            // Überprüfen, ob das Verzeichnis existiert
+            if (!Directory.Exists(path))
+            {
+                Console.WriteLine("Verzeichnis existiert nicht.");
+                return false;
+            }
 
+            // Überprüfen, ob Zugriff auf das Verzeichnis möglich ist
+            var files = Directory.GetFiles(path);
+            return true; // Wenn wir die Dateien auflisten konnten, ist der Zugriff möglich
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Console.WriteLine("Keine Berechtigung, auf das Verzeichnis zuzugreifen.");
+            return false;
+        }
+        catch (PathTooLongException)
+        {
+            Console.WriteLine("Der Pfad ist zu lang.");
+            return false;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            Console.WriteLine("Verzeichnis wurde nicht gefunden.");
+            return false;
+        }
+        catch (IOException ex)
+        {
+            Console.WriteLine($"Fehler beim Zugriff auf das Verzeichnis: {ex.Message}");
+            return false;
+        }
+        catch (SecurityException)
+        {
+            Console.WriteLine("Sicherheitsfehler beim Zugriff auf das Verzeichnis.");
+            return false;
+        }
+    }
     public static bool IsDriveAvailable(string driveLetter)
     {
         // Füge das ":\" hinzu, um das vollständige Laufwerk zu erstellen, z.B. "D:\"

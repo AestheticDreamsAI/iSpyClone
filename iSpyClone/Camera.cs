@@ -17,6 +17,7 @@ public class Camera
     public string CameraUser { get; set; }
     public string CameraPass { get; set; }
     public bool IsRecording { get; set; } // Neue Eigenschaft hinzugefügt
+    public int altDir { get; set; } // Neue Eigenschaft hinzugefügt
     public MotionDetector MotionDetector { get; set; }
 
     public Camera Clone()
@@ -29,14 +30,36 @@ public class Camera
             CameraUser = this.CameraUser,
             CameraPass = this.CameraPass,
             IsRecording = false,
-            MotionDetector = null // Clone MotionDetector if not null
+            MotionDetector = null, // Clone MotionDetector if not null
+            altDir = 0
         };
     }
 
+    public string getDir(string type)
+    {
+        string baseDirectory = Program.manager.getDirectory();
+
+        // Build directory paths based on type (images or video)
+        string originalDir = $@"{baseDirectory}\{type}\{this.CameraIndex}";
+        string altDirPath = $@"{baseDirectory}\{type}\{this.CameraIndex}.{this.altDir}";
+
+        // Check if altDir is set and the alternative directory exists
+        if (altDir > 0 && Directory.Exists(altDirPath))
+        {
+            return altDirPath;
+        }
+        else
+        {
+            // Return the original directory if no valid altDir is found
+            return originalDir;
+        }
+    }
     public byte[] GetRecording(string path)
     {
         // Replace the path as per the original logic
-        string filePath = path.Replace(".\\media", Program.manager.getDirectory()) + "\\animated.gif";
+        var f = Path.GetFileNameWithoutExtension(path);
+
+        string filePath = $"{this.getDir("video")}\\{f}\\animated.gif";
 
         // Check if the file is corrupt before proceeding
         if (DataChecker.IsFileCorrupt(filePath))
@@ -45,16 +68,21 @@ public class Camera
         }
 
         // Load image and convert it to byte array in a using block to dispose the resource properly
-        using (Image image = Image.FromFile(filePath))
+        if (File.Exists(filePath))
         {
-            return this.ImageToByteArray(image);
+            using (Image image = Image.FromFile(filePath))
+            {
+                return this.ImageToByteArray(image);
+            }
         }
+        return null;
     }
 
     public string GetRecordingFrames(string path)
     {
         // Replace the path as per the original logic
-        string filePath = path + "\\animated.gif";
+        var f = Path.GetFileNameWithoutExtension(path);
+        string filePath = $"{getDir("video")}\\{f}\\animated.gif";
 
         // Check if the file is corrupt before proceeding
         if (DataChecker.IsFileCorrupt(filePath))
@@ -71,7 +99,7 @@ public class Camera
         long totalSize = 0;
 
         // Hole das Verzeichnis für die Frame-Dateien der aktuellen Kamera
-        string directoryPath = Path.Combine(Program.manager.getDirectory(), "images", this.CameraIndex.ToString());
+        string directoryPath = getDir("images");
 
         // Prüfe, ob das Verzeichnis existiert
         if (Directory.Exists(directoryPath))
@@ -121,7 +149,7 @@ public class Camera
     public List<Recording> GetRecordings()
     {
         var recordings = new List<Recording>();
-        foreach (var f in Directory.GetDirectories(Program.manager.getDirectory() + $@"\video\{this.CameraIndex}\", "*.*"))
+        foreach (var f in Directory.GetDirectories(getDir("video"), "*.*"))
         {
             try
             {

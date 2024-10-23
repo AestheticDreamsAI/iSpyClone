@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,7 +37,9 @@ using System.Threading.Tasks;
 
     public static async Task<byte[]> GetRecording(string path)
     {
-        var camera = new Camera();
+        var i = path.Replace(".\\media\\video\\", "").Replace("\\"+Path.GetFileName(path),"");
+
+        var camera = Cameras.Get(Convert.ToInt32(i));
         try
         {
             return camera.GetRecording(path);
@@ -53,7 +56,9 @@ using System.Threading.Tasks;
 
     public static List<string> ExtractGifFramesAsBase64(string filePath)
     {
-                var camera = new Camera();
+        var index = Path.GetFileNameWithoutExtension(filePath.Replace("media\\video\\", "").Replace("\\" + Path.GetFileName(filePath), ""));
+
+        var camera = Cameras.Get(Convert.ToInt32(index));
         List<string> framesBase64 = new List<string>();
 
         using (Image gifImage = Image.FromFile(camera.GetRecordingFrames(filePath)))
@@ -165,8 +170,8 @@ using System.Threading.Tasks;
 
     private static async Task CreateGif(string cameraIndex, string timestamp, List<string> imageFiles)
     {
-
-        string gifFolderPath = Path.Combine(Program.manager.getDirectory(), "video", cameraIndex, timestamp);
+        var c = Cameras.Get(Convert.ToInt32(cameraIndex));
+        string gifFolderPath = $"{c.getDir("video")}\\{timestamp}";
         if (!Directory.Exists(gifFolderPath))
         {
             Directory.CreateDirectory(gifFolderPath); // Ensure the directory exists
@@ -198,7 +203,7 @@ using System.Threading.Tasks;
 
             // GIF optimieren (entfernt redundante Frames, reduziert die Größe weiter)
             collection.Optimize();
-            gifFolderPath = Path.Combine(Program.manager.getDirectory(), "video", cameraIndex, timestamp);
+            gifFolderPath = $"{c.getDir("video")}\\{timestamp}";
             if (!Directory.Exists(gifFolderPath))
             {
                 Directory.CreateDirectory(gifFolderPath); // Ensure the directory exists
@@ -221,7 +226,7 @@ using System.Threading.Tasks;
         string timestamp = d.ToString("dd-MM-yyyy_HH-mm-ss");
 
         // Create the path as media/images/{cam.CameraIndex}/{timestamp}
-        string folderPath = Path.Combine(Program.manager.getDirectory(), "images", cam.CameraIndex.ToString(), timestamp);
+        string folderPath = Path.Combine(cam.getDir("images"), timestamp);
         if (!Directory.Exists(folderPath))
         {
             Directory.CreateDirectory(folderPath); // Ensure the directory exists
@@ -230,7 +235,7 @@ using System.Threading.Tasks;
 
         while (imageCount < totalframes)
         {
-            folderPath = Path.Combine(Program.manager.getDirectory(), "images", cam.CameraIndex.ToString(), timestamp);
+            folderPath = Path.Combine(cam.getDir("images"), timestamp);
             if (!Directory.Exists(folderPath))
             {
                 Directory.CreateDirectory(folderPath); // Ensure the directory exists
