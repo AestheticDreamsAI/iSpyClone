@@ -54,6 +54,66 @@ public class Camera
             return originalDir;
         }
     }
+
+    public async Task AltDirCheck()
+    {
+        var c = this;
+            string baseDirectory = Program.manager.getDirectory();
+            string videoDir = $@"{baseDirectory}\video\{c.CameraIndex}";
+            string imagesDir = $@"{baseDirectory}\images\{c.CameraIndex}";
+
+            // Check if the primary directories are accessible
+            bool isVideoDirAccessible = DataChecker.IsDirectoryAccessible(videoDir);
+            bool isImagesDirAccessible = DataChecker.IsDirectoryAccessible(imagesDir);
+
+            if (!isVideoDirAccessible || !isImagesDirAccessible)
+            {
+                // Increment altDir and check if the alternative directories exist
+                int altDirIndex = c.altDir;
+
+                while (true)
+                {
+                    string altVideoDir = $@"{baseDirectory}\video\{c.CameraIndex}.{altDirIndex}";
+                    string altImagesDir = $@"{baseDirectory}\images\{c.CameraIndex}.{altDirIndex}";
+
+                    bool isAltVideoDirAccessible = DataChecker.IsDirectoryAccessible(altVideoDir);
+                    bool isAltImagesDirAccessible = DataChecker.IsDirectoryAccessible(altImagesDir);
+
+                    // If alternative directory does not exist, create new directories
+                    if (!isAltVideoDirAccessible || !isAltImagesDirAccessible)
+                    {
+                        // Create new directories if they don't exist
+                        if (!Directory.Exists(altVideoDir))
+                        {
+                            Directory.CreateDirectory(altVideoDir);
+                        }
+
+                        if (!Directory.Exists(altImagesDir))
+                        {
+                            Directory.CreateDirectory(altImagesDir);
+                        }
+
+                        // Set the new altDir index for the camera
+                        c.altDir = altDirIndex;
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Program.logWriter.WriteLine($"Dir Status ({c.CameraName}): Unaccessible");
+                    Program.logWriter.WriteLine($"Dir Set ({c.CameraName}): {c.CameraIndex}.{altDirIndex}");
+                    break;
+                    }
+                    else
+                    {
+                        // If alternative directory already exists and is accessible, use it
+                        c.altDir = altDirIndex;
+                        break;
+                    }
+                }
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Program.logWriter.WriteLine($"Dir Status ({c.CameraName}): Ok");
+        }
+    }
     public byte[] GetRecording(string path)
     {
         // Replace the path as per the original logic

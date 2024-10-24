@@ -10,31 +10,47 @@ public class Cameras
     private static string filePath = "cam.json";
     public static void Load()
     {
-        // JSON-Datei einlesen und in Dictionary<int, Camera> umwandeln
+        // Clear the list before loading new data
         list.Clear();
-        if (File.Exists(filePath))
+
+        // Check if the main file exists, otherwise fallback to the backup
+        string fileToLoad = File.Exists(filePath) ? filePath : (File.Exists(filePath + ".bak") ? filePath + ".bak" : null);
+
+        if (fileToLoad == null)
         {
-            list = JsonConvert.DeserializeObject<Dictionary<int, Camera>>(File.ReadAllText(filePath));
-            foreach(Camera cam in list.Values)
-            {
-                var dir1 = Program.manager.getDirectory() + $"\\images\\{cam.CameraIndex}";
-                var dir2 = Program.manager.getDirectory() + $"\\video\\{cam.CameraIndex}";
-                if (!Directory.Exists(dir1))
-                {
-                    Directory.CreateDirectory(dir1);
-                }
-                if (!Directory.Exists(dir2))
-                {
-                    Directory.CreateDirectory(dir2);
-                }
-            }
-        }
-        else
-        {
-            Console.WriteLine("JSON-Datei nicht gefunden.");
+            Console.WriteLine("Neither the main file nor the backup file was found.");
             return;
         }
+
+        try
+        {
+            // Read and deserialize the JSON file into the dictionary
+            list = JsonConvert.DeserializeObject<Dictionary<int, Camera>>(File.ReadAllText(fileToLoad)) ?? new Dictionary<int, Camera>();
+
+            // Create necessary directories for each camera
+            foreach (Camera cam in list.Values)
+            {
+                CreateDirectoryIfNotExists(Program.manager.getDirectory() + $"\\images\\{cam.CameraIndex}");
+                CreateDirectoryIfNotExists(Program.manager.getDirectory() + $"\\video\\{cam.CameraIndex}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load data: {ex.Message}");
+            // Initialize list to an empty dictionary to avoid null references
+            list = new Dictionary<int, Camera>();
+        }
     }
+
+    // Helper function to create directory if it doesn't exist
+    private static void CreateDirectoryIfNotExists(string path)
+    {
+        if (!Directory.Exists(path))
+        {
+            Directory.CreateDirectory(path);
+        }
+    }
+
 
     public static bool RecordingState()
     {
@@ -44,6 +60,7 @@ public class Cameras
 
     public static void Save()
     {
+        File.Copy(filePath, $"{filePath}.bak");
         Dictionary<int, Camera> l = new Dictionary<int, Camera>();
         foreach (var kvp in list)
         {

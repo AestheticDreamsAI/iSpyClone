@@ -73,6 +73,7 @@ class Program
 
             CameraStatistics.SaveStatistics();
             config.Save();
+            Cameras.Save();
             server.Stop();
             try
             {

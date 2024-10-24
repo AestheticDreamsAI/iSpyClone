@@ -229,7 +229,6 @@
             {
 
                 // Prüfen, ob Primärverzeichnis wieder verfügbar ist und synchronisieren
-                await AltDirCheck();
                 await SyncFilesWhenPrimaryAvailableAsync();
 
                 // Überprüfe, ob die Größe des Verzeichnisses das Limit überschreitet und lösche bei Bedarf
@@ -251,59 +250,7 @@
         Console.WriteLine("- File Manager stopped...");
     }
 
-    private async Task AltDirCheck()
-    {
-        foreach (var c in Cameras.All())
-        {
-            string baseDirectory = Program.manager.getDirectory();
-            string videoDir = $@"{baseDirectory}\video\{c.CameraIndex}";
-            string imagesDir = $@"{baseDirectory}\images\{c.CameraIndex}";
-
-            // Check if the primary directories are accessible
-            bool isVideoDirAccessible = DataChecker.IsDirectoryAccessible(videoDir);
-            bool isImagesDirAccessible = DataChecker.IsDirectoryAccessible(imagesDir);
-
-            if (!isVideoDirAccessible || !isImagesDirAccessible)
-            {
-                // Increment altDir and check if the alternative directories exist
-                int altDirIndex = c.altDir;
-
-                while (true)
-                {
-                    string altVideoDir = $@"{baseDirectory}\video\{c.CameraIndex}.{altDirIndex}";
-                    string altImagesDir = $@"{baseDirectory}\images\{c.CameraIndex}.{altDirIndex}";
-
-                    bool isAltVideoDirAccessible = DataChecker.IsDirectoryAccessible(altVideoDir);
-                    bool isAltImagesDirAccessible = DataChecker.IsDirectoryAccessible(altImagesDir);
-
-                    // If alternative directory does not exist, create new directories
-                    if (!isAltVideoDirAccessible || !isAltImagesDirAccessible)
-                    {
-                        // Create new directories if they don't exist
-                        if (!Directory.Exists(altVideoDir))
-                        {
-                            Directory.CreateDirectory(altVideoDir);
-                        }
-
-                        if (!Directory.Exists(altImagesDir))
-                        {
-                            Directory.CreateDirectory(altImagesDir);
-                        }
-
-                        // Set the new altDir index for the camera
-                        c.altDir = altDirIndex;
-                        break;
-                    }
-                    else
-                    {
-                        // If alternative directory already exists and is accessible, use it
-                        c.altDir = altDirIndex;
-                        break;
-                    }
-                }
-            }
-        }
-    }
+  
 
     private async Task CheckAndClearIfExceedsLimitAsync()
     {

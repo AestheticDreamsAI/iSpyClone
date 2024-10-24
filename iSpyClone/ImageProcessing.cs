@@ -221,7 +221,7 @@ using System.Threading.Tasks;
     {
         int imageCount = 0;
         var d = DateTime.Now;
-
+        await cam.AltDirCheck();
         // Safe timestamp format for folder creation
         string timestamp = d.ToString("dd-MM-yyyy_HH-mm-ss");
 
